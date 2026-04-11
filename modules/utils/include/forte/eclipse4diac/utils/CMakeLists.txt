@@ -12,18 +12,21 @@
 #      - initial API and implementation and/or initial documentation
 #############################################################################
 
+# This file was generated using the 4DIAC FORTE Export Filter 3.1.100.202604012115!
+
+
 target_sources(forte-utils PUBLIC
         FILE_SET HEADERS
         FILES
         FB_RANDOM_fbt.h
         GEN_CSV_WRITER_fbt.h
-        GetInstancePath_fbt.h
         GetInstancePathAndName_fbt.h
+        GetInstancePath_fbt.h
         OUT_ANY_CONSOLE_fbt.h
         STEST_END_fbt.h
         TEST_CONDITION_fbt.h
 )
-
+add_subdirectory(arrays)
 add_subdirectory(assembling)
 add_subdirectory(const)
 add_subdirectory(selection)
