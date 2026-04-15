@@ -70,5 +70,22 @@ namespace forte::eclipse4diac::rtevents {
       CIEC_BOOL var_QI;
       CIEC_TIME var_Deadline;
       CIEC_BOOL var_QO;
+
+      ~CRTEventSingle() override = default;
+
+      EMGMResponse changeExecutionState(EMGMCommandType paCommand) override {
+        EMGMResponse retVal = CFunctionBlock::changeExecutionState(paCommand);
+        if (retVal == EMGMResponse::Ready &&
+            (paCommand == EMGMCommandType::Stop || paCommand == EMGMCommandType::Kill)) {
+          mECEO.changeExecutionState(paCommand);
+          mInitialized = false;
+        }
+        return retVal;
+      }
+
+    public:
+      CEventChainExecutionThread &getInternalEventChain() {
+        return mECEO;
+      }
   };
 } // namespace forte::eclipse4diac::rtevents

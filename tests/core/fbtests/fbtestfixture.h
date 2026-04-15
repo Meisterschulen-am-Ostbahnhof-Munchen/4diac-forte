@@ -74,6 +74,10 @@ namespace forte::test {
         return mGenDIs[paIndex].get();
       }
 
+      CFunctionBlock *getFBUnderTest() const {
+        return mFBUnderTest;
+      }
+
     private:
       void executeEvent(TEventID paEIID, CEventChainExecutionThread *const paECET) override;
 
@@ -99,6 +103,7 @@ namespace forte::test {
       StringId mTypeId;
       std::string mConfigString;
       CFunctionBlock *mFBUnderTest;
+
       std::vector<std::unique_ptr<CDataConnection>> mDIConnections;
       std::vector<std::unique_ptr<CIEC_ANY>> mGenDIs;
 
