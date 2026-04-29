@@ -60,8 +60,8 @@ namespace forte::iec61131::comparison {
       case scmEventREQID:
         if (!var_IN1.isComparable(var_IN2)) {
           DEVLOG_ERROR("Comparing incompatible types in %s! IN1=%s, IN2=%s\n",
-                       getFullQualifiedApplicationInstanceName('.').c_str(), var_IN1.getTypeNameID().data(),
-                       var_IN2.getTypeNameID().data());
+                       getFullQualifiedApplicationInstanceName('.').c_str(), var_IN1.unwrap().getTypeNameID().data(),
+                       var_IN2.unwrap().getTypeNameID().data());
           var_OUT = false_BOOL;
         } else {
           var_OUT = CIEC_BOOL(var_IN1 == var_IN2);
