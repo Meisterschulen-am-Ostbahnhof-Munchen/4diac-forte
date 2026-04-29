@@ -13,13 +13,13 @@ rm -r "./$forte_bin_dir"
 #goto new Directory
 cd "./$forte_bin_dir"
 
-#make
-make
+#ninja
+ninja
 
 
 echo "----------------------------------------------------------------------------"
-echo " DONE. to re-make just type:"
+echo " DONE. to re-ninja just type:"
 echo "cd ./$forte_bin_dir"
-echo "make -j" 
+echo "ninja -j" 
 echo "----------------------------------------------------------------------------"
 

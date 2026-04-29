@@ -24,23 +24,29 @@ fi
 
 if [ -d "$forte_bin_dir" ]; then
   
-  echo "For building forte go to $forte_bin_dir and execute \"make\""
+  echo "For building forte go to $forte_bin_dir and execute \"ninja\""
   echo "forte can be found at ${forte_bin_dir}/src"
   echo "forte_tests can be found at ${forte_bin_dir}/tests"
   
   
   cd "./$forte_bin_dir"
   
-  cmake -G "Unix Makefiles" \
+  cmake -G "Ninja" \
     -DFORTE_ARCHITECTURE=Posix \
+    -DFORTE_EventChainExternalEventListSize=512 \
+    -DFORTE_EventChainEventListSize=1024 \
+    -DFORTE_IO=ON \
+    -DFORTE_LOGLEVEL=LOGDEBUG \
     -DFORTE_COM_ETH=ON \
     -DFORTE_COM_FBDK=ON \
     -DFORTE_COM_LOCAL=ON \
-    -DFORTE_TESTS=OFF \
-    -DFORTE_TESTS_INC_DIRS=${forte_boost_test_inc_dirs} \
-    -DFORTE_TESTS_LINK_DIRS=${forte_boost_test_inc_dirs} \
+    -DFORTE_TESTS=ON \
+    -DFORTE_SYSTEM_TESTS=ON \
+    -DFORTE_FILEIO_RAMDISK=ON \
     -DFORTE_MODULE_CONVERT=ON \
+    -DFORTE_MODULE_RT_Events=ON \
     -DFORTE_MODULE_IEC61131=ON \
+    -DFORTE_MODULE_CONVERT=ON \
     -DFORTE_MODULE_UTILS=ON \
     ../../
 else
