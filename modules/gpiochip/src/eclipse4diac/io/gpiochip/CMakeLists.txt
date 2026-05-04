@@ -2,4 +2,6 @@
 
 target_sources(forte-gpiochip PRIVATE
         GPIOChip_fbt.cpp
+        GPIOChip_IX_fbt.cpp
+        GPIOChip_QX_fbt.cpp
 )

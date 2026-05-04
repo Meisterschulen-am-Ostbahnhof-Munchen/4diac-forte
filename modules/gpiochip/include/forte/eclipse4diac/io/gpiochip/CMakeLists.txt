@@ -4,4 +4,6 @@ target_sources(forte-gpiochip PUBLIC
         FILE_SET HEADERS
         FILES
         GPIOChip_fbt.h
+        GPIOChip_IX_fbt.h
+        GPIOChip_QX_fbt.h
 )
