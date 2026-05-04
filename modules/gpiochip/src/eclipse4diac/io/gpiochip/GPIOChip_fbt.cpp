@@ -10,7 +10,7 @@
  *   Jörg Walter - initial implementation
  *******************************************************************************/
 
-#include "gpiochip_config_fb.h"
+#include "forte/eclipse4diac/io/gpiochip/GPIOChip_fbt.h"
 #include "gpiochip_controller.h"
 
 using namespace forte::literals;
