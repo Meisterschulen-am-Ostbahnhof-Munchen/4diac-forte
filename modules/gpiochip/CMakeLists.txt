@@ -22,8 +22,11 @@ endif ()
 
 add_library(forte-gpiochip
             gpiochip_controller.h gpiochip_controller.cpp
-            gpiochip_config_fb.h gpiochip_config_fb.cpp
 )
+
+add_subdirectory(include)
+add_subdirectory(src)
+
 target_link_libraries(forte-gpiochip PUBLIC forte-core)
 target_link_libraries(forte PUBLIC $<IF:$<BOOL:${BUILD_SHARED_LIBS}>,forte-gpiochip,$<LINK_LIBRARY:WHOLE_ARCHIVE,forte-gpiochip>>)
 install(TARGETS forte-gpiochip EXPORT forte-export FILE_SET HEADERS)
