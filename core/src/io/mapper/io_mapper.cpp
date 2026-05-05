@@ -42,11 +42,11 @@ namespace forte::io {
 
     DEVLOG_DEBUG("[IOMapper] Register handle %s\n", paId.c_str());
 
-    // Check for existing observer
-    if (mObservers.find(paId) != mObservers.end()) {
-      paHandle.onObserver(mObservers[paId]);
-      mObservers[paId]->onHandle(&paHandle);
-
+    // Check for existing observers
+    auto range = mObservers.equal_range(paId);
+    for (auto obsIt = range.first; obsIt != range.second; ++obsIt) {
+      paHandle.onObserver(obsIt->second);
+      obsIt->second->onHandle(&paHandle);
       DEVLOG_INFO("[IOMapper] Connected %s\n", paId.c_str());
     }
 
@@ -58,9 +58,12 @@ namespace forte::io {
 
     for (auto it = mHandles.begin(); it != mHandles.end(); ++it) {
       if (it->second == &paHandle) {
-        if (mObservers.find(it->first) != mObservers.end()) {
+        auto range = mObservers.equal_range(it->first);
+        if (range.first != range.second) {
           paHandle.dropObserver();
-          mObservers[it->first]->dropHandle();
+          for (auto obsIt = range.first; obsIt != range.second; ++obsIt) {
+            obsIt->second->dropHandle();
+          }
           DEVLOG_INFO("[IOMapper]  Disconnected %s (lost handle)\n", it->first.data());
         }
 
@@ -77,10 +80,12 @@ namespace forte::io {
 
     auto handleIt = mHandles.find(paId);
     if (handleIt != mHandles.end()) {
-      auto observerIt = mObservers.find(paId);
-      if (observerIt != mObservers.end()) {
+      auto range = mObservers.equal_range(paId);
+      if (range.first != range.second) {
         handleIt->second->dropObserver();
-        observerIt->second->dropHandle();
+        for (auto obsIt = range.first; obsIt != range.second; ++obsIt) {
+          obsIt->second->dropHandle();
+        }
         DEVLOG_INFO("[IOMapper] Disconnected %s (lost handle)\n", paId.c_str());
       }
       DEVLOG_DEBUG("[IOMapper] Deregister handle %s\n", paId.c_str());
@@ -136,7 +141,7 @@ namespace forte::io {
     for (TObserverMap::iterator it = mObservers.begin(); it != mObservers.end(); ++it) {
       if (it->second == paObserver) {
         if (mHandles.find(it->first) != mHandles.end()) {
-          mHandles[it->first]->dropObserver();
+          mHandles[it->first]->dropObserver(paObserver);
           paObserver->dropHandle();
           DEVLOG_INFO("[IOMapper]  Disconnected %s (lost observer)\n", it->first.data());
         }

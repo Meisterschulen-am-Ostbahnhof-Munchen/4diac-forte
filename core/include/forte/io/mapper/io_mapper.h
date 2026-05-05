@@ -51,7 +51,7 @@ namespace forte::io {
       typedef std::map<std::string, IOHandle *> THandleMap;
       THandleMap mHandles;
 
-      typedef std::map<std::string, IOObserver *> TObserverMap;
+      typedef std::multimap<std::string, IOObserver *> TObserverMap;
       TObserverMap mObservers;
 
       arch::CSyncObject mSyncMutex;

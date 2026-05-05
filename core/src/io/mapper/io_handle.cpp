@@ -51,8 +51,7 @@ namespace forte::io {
   }
 
   void IOHandle::onChange() {
-    auto itEnd(mObservers.end());
-    for (auto itObserver = mObservers.begin(); itObserver != itEnd;) {
+    for (auto itObserver = mObservers.begin(); itObserver != mObservers.end(); ++itObserver) {
       if ((*itObserver)->onChange()) {
         mController->fireIndicationEvent((*itObserver));
       }
