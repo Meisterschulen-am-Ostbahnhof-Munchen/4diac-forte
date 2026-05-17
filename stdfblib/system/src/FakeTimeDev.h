@@ -25,6 +25,7 @@ namespace forte::iec61499::system {
       ~FakeTimeDev() override;
 
       bool initialize() override;
+      void deinitialize() noexcept override;
 
       /*! \brief Adds additional functionality to the originals execute func of the device.
        *
