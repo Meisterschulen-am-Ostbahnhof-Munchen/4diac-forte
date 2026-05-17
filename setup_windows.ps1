@@ -10,7 +10,11 @@ Write-Host " Using Boost from .\external\boost.1.87.0"
 Write-Host "----------------------------------------------------------------------------"
 
 $forte_bin_dir = "bin/windows"
-$boost_dir = "$(Get-Location)\external\boost.1.87.0"
+
+#set to boost-include directory
+export forte_boost_test_inc_dirs="$(Get-Location)\external\boost.1.87.0"
+#set to boost-library directory
+export forte_boost_test_lib_dirs="$(Get-Location)\external\boost.1.87.0"
 
 if (!(Test-Path $forte_bin_dir)) {
     New-Item -ItemType Directory -Path $forte_bin_dir | Out-Null
@@ -29,7 +33,8 @@ if (Test-Path $forte_bin_dir) {
         -DFORTE_COM_FBDK=ON `
         -DFORTE_COM_LOCAL=ON `
         -DFORTE_TESTS=ON `
-        -DBOOST_ROOT="$boost_dir" `
+        -DFORTE_TESTS_INC_DIRS=${forte_boost_test_inc_dirs} `
+        -DFORTE_TESTS_LINK_DIRS=${forte_boost_test_inc_dirs} `
         -DFORTE_MODULE_CONVERT=ON `
         -DFORTE_MODULE_IEC61131=ON `
         -DFORTE_MODULE_UTILS=ON `
