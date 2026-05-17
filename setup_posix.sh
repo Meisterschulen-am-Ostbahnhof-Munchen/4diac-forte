@@ -31,12 +31,12 @@ if [ -d "$forte_bin_dir" ]; then
   
   cd "./$forte_bin_dir"
   
-  cmake -G "Unix Makefiles" \
+cmake -G "Ninja" \
     -DFORTE_ARCHITECTURE=Posix \
     -DFORTE_COM_ETH=ON \
     -DFORTE_COM_FBDK=ON \
     -DFORTE_COM_LOCAL=ON \
-    -DFORTE_TESTS=OFF \
+    -DFORTE_TESTS=ON \
     -DFORTE_TESTS_INC_DIRS=${forte_boost_test_inc_dirs} \
     -DFORTE_TESTS_LINK_DIRS=${forte_boost_test_inc_dirs} \
     -DFORTE_MODULE_CONVERT=ON \
