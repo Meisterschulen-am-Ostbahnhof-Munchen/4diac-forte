@@ -19,7 +19,7 @@
 
 namespace forte::arch {
   CWin32Semaphore::CWin32Semaphore(unsigned int paInitialValue) {
-    mSemaphore = CreateSemaphore(nullptr, (paInitialValue > 1 ? 1 : 0), 1, nullptr);
+    mSemaphore = CreateSemaphore(nullptr, static_cast<LONG>(paInitialValue), 32767, nullptr);
     if (0 == mSemaphore) {
       DEVLOG_ERROR("Could not initialize suspend semaphore: %d\n", GetLastError());
     }
