@@ -49,7 +49,6 @@ if (Test-Path $forte_bin_dir) {
         -DFORTE_MODULE_UTILS=ON `
         -DFORTE_SYSTEM_TESTS=ON `
         -DFORTE_TESTS=ON `
-        -DFORTE_TEST_SANITIZE=ON `
         "-DFORTE_TESTS_INC_DIRS=$forte_boost_test_inc_dirs" `
         "-DFORTE_TESTS_LINK_DIRS=$forte_boost_test_inc_dirs" `
         ../../
