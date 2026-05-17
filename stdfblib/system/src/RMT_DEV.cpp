@@ -50,12 +50,19 @@ namespace forte::iec61499::system {
     }
 
     if (!MGR.initialize()) {
+      // rollback CDevice::initialize()
+      CDevice::deinitialize();
       return false;
     }
 
     // we need to manually create this connection as the MGR is not managed by device
     conn_MGR_ID_int.connect(MGR, std::array{"MGR_ID"_STRID});
     return true;
+  }
+
+  void RMT_DEV::deinitialize() noexcept {
+    MGR.deinitialize();
+    CDevice::deinitialize();
   }
 
   RMT_DEV::~RMT_DEV() = default;

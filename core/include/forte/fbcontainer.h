@@ -40,11 +40,15 @@ namespace forte {
     protected:
       using NameIterator = TNameIdentifier::const_iterator;
 
+      bool isDeinitialized() const noexcept {
+        return mDeinitialized;
+      }
+
     public:
       CFBContainer(StringId paContInstanceName, CFBContainer &paParent);
 
       virtual bool initialize();
-      virtual void deinitialize();
+      virtual void deinitialize() noexcept;
 
       virtual ~CFBContainer();
 
@@ -211,6 +215,8 @@ namespace forte {
                              //!< the device itself!
 
       TFBContainerList mChildren; //!< List of children (i.e, fbs or subapplications in this container)
+
+      bool mDeinitialized = false;
   };
 
   template<typename T>
@@ -236,6 +242,7 @@ namespace forte {
       }
 
       ~CInternalFB() {
+        mFB->deinitialize();
         mFB->getParent().removeFB(*mFB);
       }
 

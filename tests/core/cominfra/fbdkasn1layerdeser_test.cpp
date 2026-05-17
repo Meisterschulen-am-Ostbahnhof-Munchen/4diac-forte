@@ -69,7 +69,17 @@ namespace forte::com_infra::test {
   namespace {
     const auto scmInputTypes = std::array{"BOOL"_STRID, "BOOL"_STRID};
 
-    iec61499::system::EMB_RES resource({}, resource);
+    // Wrapper to ensure deinitialize() is called before destruction of the static resource
+    struct CResourceHolder {
+        iec61499::system::EMB_RES resource;
+        CResourceHolder() : resource({}, resource) {
+        }
+        ~CResourceHolder() {
+          resource.deinitialize();
+        }
+    };
+    CResourceHolder gResourceHolder;
+    iec61499::system::EMB_RES &resource = gResourceHolder.resource;
   } // namespace
 
   template<typename... RD>
@@ -92,7 +102,9 @@ namespace forte::com_infra::test {
         setupFBInterface();
       }
 
-      ~CDeserTestMockCommFB() override = default;
+      ~CDeserTestMockCommFB() override {
+        deinitialize();
+      }
 
     protected:
       void createGenOutputData() override {

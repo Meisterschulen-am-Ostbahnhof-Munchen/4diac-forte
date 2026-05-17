@@ -71,6 +71,7 @@ namespace forte::iec61499::system {
     if (mControlledDevice != nullptr) {
       mControlledDevice->changeExecutionState(EMGMCommandType::Kill);
       mControlledDevice->awaitShutdown();
+      mControlledDevice->deinitialize();
     }
   }
 

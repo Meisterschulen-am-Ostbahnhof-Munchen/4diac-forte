@@ -68,6 +68,7 @@ namespace forte::trace::test {
       }
       device->changeExecutionState(EMGMCommandType::Stop);
       resource->getResourceEventExecution()->joinEventChainExecutionThread();
+      device->deinitialize();
     }
 
     // disable logging

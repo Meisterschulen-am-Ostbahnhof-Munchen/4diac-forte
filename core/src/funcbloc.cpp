@@ -63,7 +63,10 @@ CFunctionBlock::~CFunctionBlock() {
   freeEventMonitoringData();
 }
 
-void CFunctionBlock::deinitialize() {
+void CFunctionBlock::deinitialize() noexcept {
+  if (isDeinitialized()) {
+    return; // already deinitialized, guard against double-calls
+  }
   CFBContainer::deinitialize();
 
   // disconnect all event connections

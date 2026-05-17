@@ -33,6 +33,7 @@ namespace forte::test {
     std::string buffer;
     testFb.toString(buffer);
     BOOST_CHECK_EQUAL(buffer, result);
+    testFb.deinitialize();
   }
 
   BOOST_AUTO_TEST_CASE(FB_TO_STRING_BUFFER_SIZE_TEST_WITH_INRENAL_VAR) {
@@ -103,6 +104,7 @@ namespace forte::test {
     const auto cInternalsNames = std::array{"QU"_STRID, "QD"_STRID, "CV"_STRID};
     CInternalVarTestFB testFb(cInternalsNames);
     BOOST_REQUIRE(testFb.initialize());
+    testFb.deinitialize();
   }
 
   BOOST_AUTO_TEST_SUITE_END()

@@ -102,6 +102,8 @@ namespace forte::test {
     }
 
     performFBDeleteTests();
+    // Properly deinitialize the test fixture FB itself after all connections have been cleaned up
+    deinitialize();
   }
 
   namespace {

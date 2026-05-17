@@ -99,6 +99,7 @@ namespace forte::test {
     // check that we should at least get the ECC variable
     namelist[0] = StringId::insert("!ECC");
     BOOST_CHECK(nullptr != testFB.getVar(namelist));
+    testFB.deinitialize();
   }
 
   BOOST_AUTO_TEST_CASE(sampleInteralVarList) {
@@ -116,6 +117,7 @@ namespace forte::test {
     BOOST_CHECK_EQUAL(CIEC_ANY::e_BOOL, testFB.getVarInternal(0)->getDataTypeID());
     BOOST_CHECK_EQUAL(CIEC_ANY::e_BOOL, testFB.getVarInternal(1)->getDataTypeID());
     BOOST_CHECK_EQUAL(CIEC_ANY::e_UINT, testFB.getVarInternal(2)->getDataTypeID());
+    testFB.deinitialize();
   }
 
   BOOST_AUTO_TEST_CASE(testToStringWithInternalVariables) {
@@ -127,6 +129,7 @@ namespace forte::test {
     std::string buffer;
     testFB.toString(buffer);
     BOOST_CHECK_EQUAL(buffer, result);
+    testFB.deinitialize();
   }
 
   BOOST_AUTO_TEST_SUITE_END()
