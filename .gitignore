@@ -36,3 +36,5 @@ file_list.txt
 /.vs/
 /.idea/
 /.cache/
+
+external/boost.1.87.0/
