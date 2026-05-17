@@ -28,24 +28,29 @@ using namespace std::string_literals;
 
 namespace forte {
   namespace {
+    // The type libraries are implemented as function-local static vectors to ensure they are destroyed at program
+    // shutdown, avoiding memory leak reports in tests. Since all FBs and resources are destroyed during the regular
+    // shutdown phase of FORTE, before static destruction begins, this is safe from shutdown-order issues.
+    template<typename T>
+    std::vector<T *> &getTypeLib() {
+      static std::vector<T *> typeLib;
+      return typeLib;
+    }
+
     std::vector<CFBTypeEntry *> &getFBTypeLib() {
-      static std::vector<CFBTypeEntry *> *fbTypeLib = new std::vector<CFBTypeEntry *>();
-      return *fbTypeLib;
+      return getTypeLib<CFBTypeEntry>();
     }
 
     std::vector<CAdapterTypeEntry *> &getAdapterTypeLib() {
-      static std::vector<CAdapterTypeEntry *> *adapterTypeLib = new std::vector<CAdapterTypeEntry *>();
-      return *adapterTypeLib;
+      return getTypeLib<CAdapterTypeEntry>();
     }
 
     std::vector<CDataTypeEntry *> &getDataTypeLib() {
-      static std::vector<CDataTypeEntry *> *dataTypeLib = new std::vector<CDataTypeEntry *>();
-      return *dataTypeLib;
+      return getTypeLib<CDataTypeEntry>();
     }
 
     std::vector<CGlobalConstEntry *> &getGlobalConstTypeLib() {
-      static std::vector<CGlobalConstEntry *> *globalConstTypeLib = new std::vector<CGlobalConstEntry *>();
-      return *globalConstTypeLib;
+      return getTypeLib<CGlobalConstEntry>();
     }
 
     CFunctionBlock *createGenericFB(StringId paInstanceNameId,
