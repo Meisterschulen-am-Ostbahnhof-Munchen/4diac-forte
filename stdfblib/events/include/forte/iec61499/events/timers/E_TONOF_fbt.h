@@ -28,7 +28,7 @@
 #include "forte/forte_st_util.h"
 #include "forte/iec61499/events/E_DELAY_fbt.h"
 #include "forte/iec61499/events/E_RF_TRIG_fbt.h"
-#include "forte/iec61499/events/E_RS_fbt.h"
+#include "forte/iec61499/events/E_SR_fbt.h"
 
 namespace forte::iec61499::events::timers {
   class FORTE_E_TONOF final : public CCompositeFB {
@@ -41,7 +41,7 @@ namespace forte::iec61499::events::timers {
 
       CInternalFB<forte::iec61499::events::FORTE_E_RF_TRIG> fb_E_RF_TRIG;
       CInternalFB<forte::iec61499::events::FORTE_E_DELAY> fb_E_DELAY_ON;
-      CInternalFB<forte::iec61499::events::FORTE_E_RS> fb_E_RS;
+      CInternalFB<forte::iec61499::events::FORTE_E_SR> fb_E_SR;
       CInternalFB<forte::iec61499::events::FORTE_E_DELAY> fb_E_DELAY_OFF;
 
       void readInputData(TEventID paEIID) override;
