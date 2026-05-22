@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2025 Profactor GmbH, ACIN, fortiss GmbH,
+ * Copyright (c) 2005 Profactor GmbH, ACIN, fortiss GmbH,
  *                          Primetals Technologies Austria GmbH,
- *                          Martin Erich Jobst
+ *                          HR Agrartechnik GmbH, Martin Erich Jobst
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -13,10 +13,11 @@
  *   Thomas Strasser, Ingomar Müller, Alois Zoitl, Gerhard Ebenhofer,
  *     Ingo Hegny, Monika Wenger
  *      - initial implementation and rework communication infrastructure,
- *   Martin Melik Merkumains - make TForteUInt16 constructor explicit,
+ *   Martin Melik Merkumians - make TForteUInt16 constructor explicit,
  *        removed built-in type operator=, added castable CIEC types operator=
  *   Martin Jobst - add user-defined literal
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -40,29 +41,29 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_UINT() = default;
+      constexpr CIEC_UINT() = default;
 
-      CIEC_UINT(const CIEC_UINT &paValue) : CIEC_ANY_UNSIGNED() {
+      constexpr CIEC_UINT(const CIEC_UINT &paValue) : CIEC_ANY_UNSIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_UINT(const CIEC_USINT &paValue) : CIEC_ANY_UNSIGNED() {
+      constexpr CIEC_UINT(const CIEC_USINT &paValue) : CIEC_ANY_UNSIGNED() {
         setValueSimple(paValue);
       }
 
       template<typename T,
                std::enable_if_t<std::is_same_v<typename mpl::implicit_cast_t<T, CIEC_UINT>, CIEC_UINT>, int> = 0>
-      explicit CIEC_UINT(const T &paValue) : CIEC_ANY_UNSIGNED() {
+      constexpr explicit CIEC_UINT(const T &paValue) : CIEC_ANY_UNSIGNED() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_UINT(const TValueType paValue) {
+      constexpr explicit CIEC_UINT(const TValueType paValue) {
         setTUINT16(paValue);
       }
 
-      ~CIEC_UINT() override = default;
+      constexpr ~CIEC_UINT() override = default;
 
-      CIEC_UINT &operator=(const CIEC_UINT &paValue) {
+      constexpr CIEC_UINT &operator=(const CIEC_UINT &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -70,7 +71,7 @@ namespace forte {
 
       template<typename T,
                std::enable_if_t<std::is_same_v<typename mpl::implicit_cast_t<T, CIEC_UINT>, CIEC_UINT>, int> = 0>
-      CIEC_UINT &operator=(const T &paValue) {
+      constexpr CIEC_UINT &operator=(const T &paValue) {
         setValueSimple(paValue);
         return *this;
       }
@@ -79,16 +80,16 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_UDINT to elementary unsigned 16 bit integer
        */
-      explicit operator TForteUInt16() const {
+      constexpr explicit operator TForteUInt16() const {
         return getTUINT16();
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_UINT;
       }
   };
 
-  inline CIEC_UINT operator""_UINT(unsigned long long int paValue) {
+  consteval inline CIEC_UINT operator""_UINT(unsigned long long int paValue) {
     return CIEC_UINT(static_cast<CIEC_UINT::TValueType>(paValue));
   }
 

@@ -1,6 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2025 Primetals Technologies Austria GmbH
- *                          Martin Erich Jobst
+ * Copyright (c) 2022 Primetals Technologies Austria GmbH,
+ *                          HR Agrartechnik GmbH, Martin Erich Jobst
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -13,6 +13,7 @@
  *      - initial implementation and rework communication infrastructure
  *   Martin Jobst - add user-defined literal
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -34,19 +35,19 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_WCHAR() = default;
+      constexpr CIEC_WCHAR() = default;
 
-      CIEC_WCHAR(const CIEC_WCHAR &paValue) : CIEC_ANY_CHAR() {
+      constexpr CIEC_WCHAR(const CIEC_WCHAR &paValue) : CIEC_ANY_CHAR() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_WCHAR(const TValueType paValue) {
+      constexpr explicit CIEC_WCHAR(const TValueType paValue) {
         setChar16(paValue);
       }
 
-      ~CIEC_WCHAR() override = default;
+      constexpr ~CIEC_WCHAR() override = default;
 
-      CIEC_WCHAR &operator=(const CIEC_WCHAR &paValue) {
+      constexpr CIEC_WCHAR &operator=(const CIEC_WCHAR &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -56,7 +57,7 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_WCHAR to elementary byte
        */
-      explicit operator TForteWChar() const {
+      constexpr explicit operator TForteWChar() const {
         return getChar16();
       }
 
@@ -64,16 +65,16 @@ namespace forte {
 
       int fromString(const char *paValue) override;
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_WCHAR;
       }
   };
 
-  inline CIEC_WCHAR operator""_WCHAR(char16_t paValue) {
+  consteval inline CIEC_WCHAR operator""_WCHAR(char16_t paValue) {
     return CIEC_WCHAR(static_cast<CIEC_WCHAR::TValueType>(paValue));
   }
 
-  inline CIEC_WCHAR operator""_WCHAR(unsigned long long int paValue) {
+  consteval inline CIEC_WCHAR operator""_WCHAR(unsigned long long int paValue) {
     return CIEC_WCHAR(static_cast<CIEC_WCHAR::TValueType>(paValue));
   }
 

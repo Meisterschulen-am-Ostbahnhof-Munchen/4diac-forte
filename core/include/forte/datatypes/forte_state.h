@@ -30,25 +30,25 @@ namespace forte {
       static const TValueType scmMinVal = 0;
       static const TValueType scmMaxVal;
 
-      CIEC_STATE() = default;
+      constexpr CIEC_STATE() = default;
 
-      CIEC_STATE(const CIEC_STATE &paValue) : CIEC_ANY_INT() {
+      constexpr CIEC_STATE(const CIEC_STATE &paValue) : CIEC_ANY_INT() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_STATE(const TValueType paValue) {
+      constexpr explicit CIEC_STATE(const TValueType paValue) {
         setTUINT16(paValue);
       }
 
-      ~CIEC_STATE() override = default;
+      constexpr ~CIEC_STATE() override = default;
 
-      CIEC_STATE &operator=(const CIEC_STATE &paValue) {
+      constexpr CIEC_STATE &operator=(const CIEC_STATE &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
       }
 
-      CIEC_STATE &operator=(const TForteUInt16 paValue) {
+      constexpr CIEC_STATE &operator=(const TForteUInt16 paValue) {
         // Simple value assignment - no self assignment check needed
         setTUINT16(paValue);
         return *this;
@@ -58,11 +58,11 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_UDINT to elementary unsigned 16 bit integer
        */
-      operator TForteUInt16() const {
+      constexpr operator TForteUInt16() const {
         return getTUINT16();
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_UINT;
       }
   };

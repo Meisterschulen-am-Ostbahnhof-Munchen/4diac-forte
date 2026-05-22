@@ -1,8 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2025 Profactor GmbH, ACIN, nxtcontrol GmbH, fortiss GmbH
+ * Copyright (c) 2005 Profactor GmbH, ACIN, nxtcontrol GmbH, fortiss GmbH
  *                          TU Vienna/ACIN, Martin Erich Jobst,
  *                          Martin Melik Merkumians,
  *                          Primetals Technologies Austria
+ *                          HR Agrartechnik GmbH
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -19,6 +20,7 @@
  *                - add support for data types with different size
  *   Martin Melik Merkumians - Add specialized numeric_limits for IEC types
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -145,18 +147,17 @@ namespace forte {
         return oToCast;
       }
 
-      CIEC_ANY() {
-        setLargestUInt(0);
+      constexpr CIEC_ANY() : mAnyData{.mLargestUInt = 0} {
       }
 
-      virtual ~CIEC_ANY() = default;
+      constexpr virtual ~CIEC_ANY() = default;
 
       /*! \brief Set method for data type member value
        *
        *  The data type value is set through the copy assignment
        *
        */
-      virtual void setValue(const CIEC_ANY &paValue) {
+      virtual constexpr void setValue(const CIEC_ANY &paValue) {
         setValueSimple(paValue);
       }
 
@@ -168,11 +169,11 @@ namespace forte {
        * @brief Unwrap ANY value if inside a container
        * @return The unwrapped value or this value if not in a container
        */
-      [[nodiscard]] virtual CIEC_ANY &unwrap() {
+      [[nodiscard]] virtual constexpr CIEC_ANY &unwrap() {
         return *this;
       }
 
-      [[nodiscard]] virtual const CIEC_ANY &unwrap() const {
+      [[nodiscard]] virtual constexpr const CIEC_ANY &unwrap() const {
         return *this;
       }
 
@@ -180,7 +181,7 @@ namespace forte {
        *
        * @return The allocation size in bytes
        */
-      virtual size_t getSizeof() const {
+      virtual constexpr size_t getSizeof() const {
         return sizeof(CIEC_ANY);
       }
 
@@ -197,7 +198,7 @@ namespace forte {
        *   With this command the data type of the actual object can be identified.
        *   The data type identifier is unique for each data type within FORTE.
        */
-      virtual EDataTypeID getDataTypeID() const {
+      virtual constexpr EDataTypeID getDataTypeID() const {
         return e_ANY;
       }
 
@@ -318,7 +319,7 @@ namespace forte {
        * \note This method does not perform implicit or explicit type promotion when comparing for equality
        *       (e.g., <code>CIEC_INT(0).equals(CIEC_SINT(0))</code> yields <code>false</code>).
        */
-      [[nodiscard]] virtual bool equals(const CIEC_ANY &paOther) const {
+      [[nodiscard]] virtual constexpr bool equals(const CIEC_ANY &paOther) const {
         if (getDataTypeID() == paOther.getDataTypeID()) {
           return mAnyData.mLargestUInt == paOther.mAnyData.mLargestUInt;
         }
@@ -381,40 +382,40 @@ namespace forte {
 
     protected:
       // Bit-pattern preservation helpers to maintain standard compliance and avoid UB.
-      static TLargestUIntValueType bitCastSignedToUInt64(TLargestIntValueType paValue) {
+      static constexpr TLargestUIntValueType bitCastSignedToUInt64(TLargestIntValueType paValue) {
         return std::bit_cast<TLargestUIntValueType>(paValue);
       }
-      static TLargestIntValueType bitCastUInt64ToSigned(TLargestUIntValueType paValue) {
+      static constexpr TLargestIntValueType bitCastUInt64ToSigned(TLargestUIntValueType paValue) {
         return std::bit_cast<TLargestIntValueType>(paValue);
       }
-      static TForteUInt32 bitCastFloatToUInt32(TForteFloat paValue) {
+      static constexpr TForteUInt32 bitCastFloatToUInt32(TForteFloat paValue) {
         return std::bit_cast<TForteUInt32>(paValue);
       }
-      static TForteFloat bitCastUInt32ToFloat(TForteUInt32 paValue) {
+      static constexpr TForteFloat bitCastUInt32ToFloat(TForteUInt32 paValue) {
         return std::bit_cast<TForteFloat>(paValue);
       }
-      static TLargestUIntValueType bitCastDFloatToUInt64(TForteDFloat paValue) {
+      static constexpr TLargestUIntValueType bitCastDFloatToUInt64(TForteDFloat paValue) {
         return std::bit_cast<TLargestUIntValueType>(paValue);
       }
-      static TForteDFloat bitCastUInt64ToDFloat(TLargestUIntValueType paValue) {
+      static constexpr TForteDFloat bitCastUInt64ToDFloat(TLargestUIntValueType paValue) {
         return std::bit_cast<TForteDFloat>(paValue);
       }
 
       // Canonical storage helpers to maintain UAnyData invariants.
       // All scalar writes MUST funnel through these helpers to ensure consistency.
-      void setUnsignedCanonical(TLargestUIntValueType paValue) {
+      constexpr void setUnsignedCanonical(TLargestUIntValueType paValue) {
         mAnyData.mLargestUInt = paValue;
       }
-      void setSignedCanonical(TLargestIntValueType paValue) {
+      constexpr void setSignedCanonical(TLargestIntValueType paValue) {
         mAnyData.mLargestUInt = bitCastSignedToUInt64(paValue);
       }
 
-      void setFloatCanonical(TForteFloat paValue) {
+      constexpr void setFloatCanonical(TForteFloat paValue) {
         // Explicitly zero-extend the 32-bit float bit pattern into the 64-bit canonical field
         mAnyData.mLargestUInt = static_cast<TLargestUIntValueType>(bitCastFloatToUInt32(paValue));
       }
 
-      void setDFloatCanonical(TForteDFloat paValue) {
+      constexpr void setDFloatCanonical(TForteDFloat paValue) {
         mAnyData.mLargestUInt = bitCastDFloatToUInt64(paValue);
       }
 
@@ -423,7 +424,7 @@ namespace forte {
        * To be used for efficiently implementing assignment operators where it is
        * known that this can be done safely.
        */
-      inline void setValueSimple(const CIEC_ANY &paValue) {
+      constexpr void setValueSimple(const CIEC_ANY &paValue) {
         mAnyData = paValue.mAnyData;
       }
 
@@ -435,112 +436,112 @@ namespace forte {
        *  When adding new scalar types or modification methods, ensure this canonical field is updated.
        */
 
-      void setTBOOL8(bool src) {
+      constexpr void setTBOOL8(bool src) {
         setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
-      void setTUINT32(TForteUInt32 src) { // also used for TForteDWord
+      constexpr void setTUINT32(TForteUInt32 src) { // also used for TForteDWord
         setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
-      void setTUINT16(TForteUInt16 src) { // also used for TForteWord
+      constexpr void setTUINT16(TForteUInt16 src) { // also used for TForteWord
         setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
-      void setTUINT8(TForteUInt8 src) { // also used for TForteByte
+      constexpr void setTUINT8(TForteUInt8 src) { // also used for TForteByte
         setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
-      void setTINT32(TForteInt32 src) {
+      constexpr void setTINT32(TForteInt32 src) {
         setSignedCanonical(static_cast<TLargestIntValueType>(src));
       }
 
-      void setTINT16(TForteInt16 src) {
+      constexpr void setTINT16(TForteInt16 src) {
         setSignedCanonical(static_cast<TLargestIntValueType>(src));
       }
 
-      void setTINT8(TForteInt8 src) {
+      constexpr void setTINT8(TForteInt8 src) {
         setSignedCanonical(static_cast<TLargestIntValueType>(src));
       }
 
-      void setChar(TForteChar src) {
+      constexpr void setChar(TForteChar src) {
         setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
-      void setChar16(TForteWChar src) {
+      constexpr void setChar16(TForteWChar src) {
         setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
-      void setTFLOAT(TForteFloat src) {
+      constexpr void setTFLOAT(TForteFloat src) {
         setFloatCanonical(src);
       }
 
-      void setTDFLOAT(TForteDFloat src) {
+      constexpr void setTDFLOAT(TForteDFloat src) {
         setDFloatCanonical(src);
       }
 
-      void setTUINT64(TForteUInt64 src) { // also used for LWORD
+      constexpr void setTUINT64(TForteUInt64 src) { // also used for LWORD
         setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
-      void setTINT64(TForteInt64 src) {
+      constexpr void setTINT64(TForteInt64 src) {
         setSignedCanonical(static_cast<TLargestIntValueType>(src));
       }
 
-      bool getTBOOL8() const {
+      constexpr bool getTBOOL8() const {
         return (mAnyData.mLargestUInt != 0);
       }
 
-      TForteUInt32 getTUINT32() const { // also used for TForteDWord
+      constexpr TForteUInt32 getTUINT32() const { // also used for TForteDWord
         return static_cast<TForteUInt32>(mAnyData.mLargestUInt);
       }
 
-      TForteUInt16 getTUINT16() const { // also used for TForteWord
+      constexpr TForteUInt16 getTUINT16() const { // also used for TForteWord
         return static_cast<TForteUInt16>(mAnyData.mLargestUInt);
       }
 
-      TForteUInt8 getTUINT8() const { // also used for TForteByte
+      constexpr TForteUInt8 getTUINT8() const { // also used for TForteByte
         return static_cast<TForteUInt8>(mAnyData.mLargestUInt);
       }
 
-      TForteInt32 getTINT32() const {
+      constexpr TForteInt32 getTINT32() const {
         return static_cast<TForteInt32>(bitCastUInt64ToSigned(mAnyData.mLargestUInt));
       }
 
-      TForteInt16 getTINT16() const {
+      constexpr TForteInt16 getTINT16() const {
         return static_cast<TForteInt16>(bitCastUInt64ToSigned(mAnyData.mLargestUInt));
       }
 
-      TForteInt8 getTINT8() const {
+      constexpr TForteInt8 getTINT8() const {
         return static_cast<TForteInt8>(bitCastUInt64ToSigned(mAnyData.mLargestUInt));
       }
 
-      TForteChar getChar8() const {
+      constexpr TForteChar getChar8() const {
         // TForteChar is defined as an unsigned 8-bit character type (see static_assert below);
         // mLargestUInt is the canonical store for all unsigned/char types.
         return static_cast<TForteChar>(mAnyData.mLargestUInt);
       }
 
-      TForteWChar getChar16() const {
+      constexpr TForteWChar getChar16() const {
         // TForteWChar is defined as a 16-bit character type (see static_assert below);
         // mLargestUInt is the canonical store for all unsigned/char types.
         return static_cast<TForteWChar>(mAnyData.mLargestUInt);
       }
 
-      TForteUInt64 getTUINT64() const { // also used for LWORD
+      constexpr TForteUInt64 getTUINT64() const { // also used for LWORD
         return static_cast<TForteUInt64>(mAnyData.mLargestUInt);
       }
 
-      TForteInt64 getTINT64() const {
+      constexpr TForteInt64 getTINT64() const {
         return bitCastUInt64ToSigned(mAnyData.mLargestUInt);
       }
 
       //!< get-Methods are Big/Little Endian independent
-      TForteFloat getTFLOAT() const {
+      constexpr TForteFloat getTFLOAT() const {
         return bitCastUInt32ToFloat(static_cast<TForteUInt32>(mAnyData.mLargestUInt));
       }
 
-      TForteDFloat getTDFLOAT() const {
+      constexpr TForteDFloat getTDFLOAT() const {
         return bitCastUInt64ToDFloat(mAnyData.mLargestUInt);
       }
 
@@ -559,19 +560,19 @@ namespace forte {
       static StringId parseTypeName(const char *paValue, const char *paHashPos);
 
     public:
-      TLargestUIntValueType getLargestUInt() const {
+      constexpr TLargestUIntValueType getLargestUInt() const {
         return mAnyData.mLargestUInt;
       }
 
-      void setLargestUInt(TLargestUIntValueType paVal) {
+      constexpr void setLargestUInt(TLargestUIntValueType paVal) {
         setUnsignedCanonical(paVal);
       }
 
-      TLargestIntValueType getLargestInt() const {
+      constexpr TLargestIntValueType getLargestInt() const {
         return bitCastUInt64ToSigned(mAnyData.mLargestUInt);
       }
 
-      void setLargestInt(TLargestIntValueType paVal) {
+      constexpr void setLargestInt(TLargestIntValueType paVal) {
         setSignedCanonical(paVal);
       }
 
@@ -594,7 +595,7 @@ namespace forte {
       };
       static_assert(sizeof(UAnyData) == sizeof(TLargestUIntValueType),
                     "UAnyData must match the size of the largest scalar type");
-      UAnyData mAnyData;
+      UAnyData mAnyData{.mLargestUInt = 0};
 
       constexpr static size_t csmDataLengthLookup[] = {0, 1, 1, 2, 4, 8, 1, 2, 4, 8, 1, 2, 4, 8, 8,
                                                        8, 8, 8, 8, 8, 8, 8, 1, 2, 4, 8, 0, 0, 0};

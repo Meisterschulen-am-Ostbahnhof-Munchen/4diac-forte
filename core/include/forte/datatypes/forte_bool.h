@@ -1,7 +1,8 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2025 Profactor GmbH, ACIN,
+ * Copyright (c) 2005 Profactor GmbH, ACIN,
  *                          Primetals Technologies Austria GmbH,
- *                          Martin Erich Jobst
+ *                          Martin Erich Jobst,
+ *                          HR Agrartechnik GmbH
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -17,6 +18,7 @@
  *                  removed built-in type operator=
  *   Martin Jobst - add user-defined literal
  *   Alois Zoitl  - migrated data type toString to std::string
+ *    Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -39,21 +41,21 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_BOOL() {
+      constexpr CIEC_BOOL() {
         setTBOOL8(false);
       }
 
-      CIEC_BOOL(const CIEC_BOOL &paValue) : CIEC_ANY_BIT() {
-        *this = paValue;
+      constexpr CIEC_BOOL(const CIEC_BOOL &paValue) : CIEC_ANY_BIT() {
+        setValueSimple(paValue);
       }
 
-      explicit CIEC_BOOL(const TValueType paValue) {
+      constexpr explicit CIEC_BOOL(const TValueType paValue) {
         setTBOOL8(paValue);
       }
 
-      ~CIEC_BOOL() override = default;
+      constexpr ~CIEC_BOOL() override = default;
 
-      CIEC_BOOL &operator=(const CIEC_BOOL &paValue) {
+      constexpr CIEC_BOOL &operator=(const CIEC_BOOL &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -63,11 +65,11 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_BOOL to elementary bool
        */
-      operator bool() const {
+      constexpr operator bool() const {
         return (0 != getLargestUInt());
       }
 
-      EDataTypeID getDataTypeID() const override final {
+      constexpr EDataTypeID getDataTypeID() const final {
         return e_BOOL;
       }
 
@@ -93,10 +95,10 @@ namespace forte {
     private:
   };
 
-  const CIEC_BOOL true_BOOL = CIEC_BOOL(true);
-  const CIEC_BOOL false_BOOL = CIEC_BOOL(false);
+  inline constexpr CIEC_BOOL true_BOOL = CIEC_BOOL(true);
+  inline constexpr CIEC_BOOL false_BOOL = CIEC_BOOL(false);
 
-  inline CIEC_BOOL operator""_BOOL(unsigned long long int paValue) {
+  consteval inline CIEC_BOOL operator""_BOOL(unsigned long long int paValue) {
     return CIEC_BOOL(paValue);
   }
 

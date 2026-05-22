@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2025 nxtControl GmbH, ACIN, fortiss GmbH,
+ * Copyright (c) 2008 nxtControl GmbH, ACIN, fortiss GmbH,
  *                          Primetals Technologies Austria GmbH,
- *                          Martin Erich Jobst
+ *                          HR Agrartechnik GmbH, Martin Erich Jobst
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -16,6 +16,7 @@
  *                  removed built-in type operator=, removed operator++
  *   Martin Jobst - add user-defined literal
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -33,9 +34,9 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       constexpr static size_t scmBitLength = 64U;
 
-      CIEC_LDATE_AND_TIME() = default;
+      constexpr CIEC_LDATE_AND_TIME() = default;
 
-      CIEC_LDATE_AND_TIME(const CIEC_LDATE_AND_TIME &paValue) : CIEC_ANY_DATE() {
+      constexpr CIEC_LDATE_AND_TIME(const CIEC_LDATE_AND_TIME &paValue) : CIEC_ANY_DATE() {
         setValueSimple(paValue);
       }
 
@@ -43,7 +44,7 @@ namespace forte {
         setValue(paValue);
       }
 
-      explicit CIEC_LDATE_AND_TIME(const TValueType paValue) {
+      constexpr explicit CIEC_LDATE_AND_TIME(const TValueType paValue) {
         setTUINT64(paValue);
       }
 
@@ -64,11 +65,11 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_TIME to unsigned 64 bit integer
        */
-      operator TForteUInt64() const {
+      constexpr operator TForteUInt64() const {
         return getTUINT64();
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_LDATE_AND_TIME;
       }
 
@@ -98,7 +99,7 @@ namespace forte {
       virtual void toGMTString(std::string &paTargetBuf) const;
   };
 
-  inline CIEC_LDATE_AND_TIME operator""_LDATE_AND_TIME(unsigned long long int paValue) {
+  consteval inline CIEC_LDATE_AND_TIME operator""_LDATE_AND_TIME(unsigned long long int paValue) {
     return CIEC_LDATE_AND_TIME(static_cast<CIEC_LDATE_AND_TIME::TValueType>(paValue));
   }
 

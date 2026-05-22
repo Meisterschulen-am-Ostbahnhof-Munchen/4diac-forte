@@ -24,14 +24,14 @@ namespace forte {
    */
   class CIEC_ANY_MAGNITUDE : public CIEC_ANY_ELEMENTARY {
     public:
-      ~CIEC_ANY_MAGNITUDE() override = default;
+      constexpr ~CIEC_ANY_MAGNITUDE() override = default;
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_ANY;
       }
 
     protected:
-      CIEC_ANY_MAGNITUDE() = default;
+      constexpr CIEC_ANY_MAGNITUDE() = default;
   };
 
   template<>

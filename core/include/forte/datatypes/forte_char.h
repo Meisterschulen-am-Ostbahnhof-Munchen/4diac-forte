@@ -1,5 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 2022, 2025 Primetals Technologies Austria GmbH
+ * Copyright (c) 2022 Primetals Technologies Austria GmbH
+ *                          HR Agrartechnik GmbH
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -11,6 +12,7 @@
  *   Martin Melik-Merkumians
  *               - initial implementation and rework communication infrastructure
  *   Alois Zoitl - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -33,19 +35,19 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_CHAR() = default;
+      constexpr CIEC_CHAR() = default;
 
-      CIEC_CHAR(const CIEC_CHAR &paValue) : CIEC_ANY_CHAR() {
+      constexpr CIEC_CHAR(const CIEC_CHAR &paValue) : CIEC_ANY_CHAR() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_CHAR(const TValueType paValue) {
+      constexpr explicit CIEC_CHAR(const TValueType paValue) {
         setChar(paValue);
       }
 
-      ~CIEC_CHAR() override = default;
+      constexpr ~CIEC_CHAR() override = default;
 
-      CIEC_CHAR &operator=(const CIEC_CHAR &paValue) {
+      constexpr CIEC_CHAR &operator=(const CIEC_CHAR &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -55,7 +57,7 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_CHAR to elementary byte
        */
-      explicit operator TForteChar() const {
+      constexpr explicit operator TForteChar() const {
         return getChar8();
       }
 
@@ -72,11 +74,11 @@ namespace forte {
     return static_cast<CIEC_CHAR::TValueType>(lhs) == static_cast<CIEC_CHAR::TValueType>(rhs);
   }
 
-  inline CIEC_CHAR operator""_CHAR(char paValue) {
+  consteval inline CIEC_CHAR operator""_CHAR(char paValue) {
     return CIEC_CHAR(static_cast<CIEC_CHAR::TValueType>(paValue));
   }
 
-  inline CIEC_CHAR operator""_CHAR(unsigned long long int paValue) {
+  consteval inline CIEC_CHAR operator""_CHAR(unsigned long long int paValue) {
     return CIEC_CHAR(static_cast<CIEC_CHAR::TValueType>(paValue));
   }
 

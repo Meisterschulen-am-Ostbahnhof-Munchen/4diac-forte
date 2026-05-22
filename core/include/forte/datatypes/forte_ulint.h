@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2025 ACIN, fortiss GmbH,
+ * Copyright (c) 2009 ACIN, fortiss GmbH,
  *                          Primetals Technologies Austria GmbH,
- *                          Martin Erich Jobst
+ *                          HR Agrartechnik GmbH, Martin Erich Jobst
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -16,6 +16,7 @@
  *        removed built-in type operator=, added castable CIEC types operator=
  *   Martin Jobst - add user-defined literal
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -42,35 +43,35 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_ULINT() = default;
+      constexpr CIEC_ULINT() = default;
 
-      CIEC_ULINT(const CIEC_ULINT &paValue) : CIEC_ANY_UNSIGNED() {
+      constexpr CIEC_ULINT(const CIEC_ULINT &paValue) : CIEC_ANY_UNSIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_ULINT(const CIEC_UDINT &paValue) : CIEC_ANY_UNSIGNED() {
+      constexpr CIEC_ULINT(const CIEC_UDINT &paValue) : CIEC_ANY_UNSIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_ULINT(const CIEC_UINT &paValue) : CIEC_ANY_UNSIGNED() {
+      constexpr CIEC_ULINT(const CIEC_UINT &paValue) : CIEC_ANY_UNSIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_ULINT(const CIEC_USINT &paValue) : CIEC_ANY_UNSIGNED() {
+      constexpr CIEC_ULINT(const CIEC_USINT &paValue) : CIEC_ANY_UNSIGNED() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_ULINT(const CIEC_ANY_INT &paValue) : CIEC_ANY_UNSIGNED() {
+      constexpr explicit CIEC_ULINT(const CIEC_ANY_INT &paValue) : CIEC_ANY_UNSIGNED() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_ULINT(const TValueType paValue) {
+      constexpr explicit CIEC_ULINT(const TValueType paValue) {
         setTUINT64(paValue);
       }
 
-      ~CIEC_ULINT() override = default;
+      constexpr ~CIEC_ULINT() override = default;
 
-      CIEC_ULINT &operator=(const CIEC_ULINT &paValue) {
+      constexpr CIEC_ULINT &operator=(const CIEC_ULINT &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -78,7 +79,7 @@ namespace forte {
 
       template<typename T,
                std::enable_if_t<std::is_same_v<typename mpl::implicit_cast_t<T, CIEC_ULINT>, CIEC_ULINT>, int> = 0>
-      CIEC_ULINT &operator=(const T &paValue) {
+      constexpr CIEC_ULINT &operator=(const T &paValue) {
         setValueSimple(paValue);
         return *this;
       }
@@ -87,16 +88,16 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_ULINT to elementary unsigned 64 bit integer
        */
-      explicit operator TForteUInt64() const {
+      constexpr explicit operator TForteUInt64() const {
         return getTUINT64();
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_ULINT;
       }
   };
 
-  inline CIEC_ULINT operator""_ULINT(unsigned long long int paValue) {
+  consteval inline CIEC_ULINT operator""_ULINT(unsigned long long int paValue) {
     return CIEC_ULINT(static_cast<CIEC_ULINT::TValueType>(paValue));
   }
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2025 Profactor GmbH, ACIN
- *                          Primetals Technologies Austria GmbH
- *                          Martin Erich Jobst
+ * Copyright (c) 2005 Profactor GmbH, ACIN, fortiss GmbH
+ *                          Primetals Technologies Austria GmbH,
+ *                          HR Agrartechnik GmbH, Martin Erich Jobst
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -18,6 +18,7 @@
  *   Martin Jobst - add user-defined literal
  *                - add ANY_SIGNED
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -40,23 +41,23 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_SINT() = default;
+      constexpr CIEC_SINT() = default;
 
-      CIEC_SINT(const CIEC_SINT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr CIEC_SINT(const CIEC_SINT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_SINT(const CIEC_ANY_INT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr explicit CIEC_SINT(const CIEC_ANY_INT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_SINT(const TValueType paValue) {
+      constexpr explicit CIEC_SINT(const TValueType paValue) {
         setTINT8(paValue);
       }
 
-      ~CIEC_SINT() override = default;
+      constexpr ~CIEC_SINT() override = default;
 
-      CIEC_SINT &operator=(const CIEC_SINT &paValue) {
+      constexpr CIEC_SINT &operator=(const CIEC_SINT &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -64,12 +65,12 @@ namespace forte {
 
       template<typename T,
                std::enable_if_t<std::is_same_v<typename mpl::implicit_cast_t<T, CIEC_SINT>, CIEC_SINT>, int> = 0>
-      CIEC_SINT &operator=(const T &paValue) {
+      constexpr CIEC_SINT &operator=(const T &paValue) {
         setValueSimple(paValue);
         return *this;
       }
 
-      CIEC_SINT operator-() const {
+      constexpr CIEC_SINT operator-() const {
         return CIEC_SINT(static_cast<TValueType>(-1) * static_cast<TValueType>(*this));
       }
 
@@ -77,16 +78,16 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_SINT to elementary 8 bit integer
        */
-      explicit operator TForteInt8() const {
+      constexpr explicit operator TForteInt8() const {
         return getTINT8();
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_SINT;
       }
   };
 
-  inline CIEC_SINT operator""_SINT(unsigned long long int paValue) {
+  consteval inline CIEC_SINT operator""_SINT(unsigned long long int paValue) {
     return CIEC_SINT(static_cast<CIEC_SINT::TValueType>(paValue));
   }
 

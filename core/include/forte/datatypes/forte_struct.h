@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2025 ACIN, Martin Erich Jobst,
- *                          Primetals Technologies Austria GmbH
+ * Copyright (c) 2010 ACIN, Martin Erich Jobst,
+ *                    Primetals Technologies Austria GmbH,
+ *                    HR Agrartechnik GmbH
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -39,9 +40,9 @@ namespace forte {
       //! Indicator for invalid array member index positions
       static constexpr size_t csmNIndex = static_cast<size_t>(-1);
 
-      CIEC_STRUCT() = default;
+      constexpr CIEC_STRUCT() = default;
 
-      ~CIEC_STRUCT() override = default;
+      constexpr ~CIEC_STRUCT() override = default;
 
       /*! \brief Get the Struct's type
        *
@@ -85,7 +86,7 @@ namespace forte {
 
       void reset() override;
 
-      EDataTypeID getDataTypeID() const final {
+      constexpr EDataTypeID getDataTypeID() const final {
         return e_STRUCT;
       }
 
@@ -148,15 +149,39 @@ namespace forte {
       enum EASN1Tags { e_UNIVERSAL = 0, e_APPLICATION = 64, e_CONTEXT = 128, e_PRIVATE = 192 };
       enum EASN1Encoding { e_PRIMITIVE = 0, e_CONSTRUCTED = 32 };
 
-      CIEC_STRUCT(const CIEC_STRUCT &) {};
+      /**
+       * @brief Copy constructor
+       *
+       * This constructor is a no-op to prevent dangerous shallow copies of the base class union state.
+       * Derived classes are responsible for correctly initializing/copying their own members.
+       */
+      constexpr CIEC_STRUCT(const CIEC_STRUCT &) : CIEC_ANY_DERIVED() {
+      }
 
-      CIEC_STRUCT(CIEC_STRUCT &&) {};
+      /**
+       * @brief Move constructor
+       *
+       * This constructor is a no-op to prevent dangerous shallow copies of the base class union state.
+       */
+      constexpr CIEC_STRUCT(CIEC_STRUCT &&) noexcept : CIEC_ANY_DERIVED() {
+      }
 
-      CIEC_STRUCT &operator=(const CIEC_STRUCT &) {
+      /**
+       * @brief Copy assignment operator
+       *
+       * This operator is a no-op in the base class.
+       * Deep copies should be performed via the virtual setValue() method.
+       */
+      constexpr CIEC_STRUCT &operator=(const CIEC_STRUCT &) {
         return *this;
       }
 
-      CIEC_STRUCT &operator=(CIEC_STRUCT &&) {
+      /**
+       * @brief Move assignment operator
+       *
+       * This operator is a no-op in the base class.
+       */
+      constexpr CIEC_STRUCT &operator=(CIEC_STRUCT &&) noexcept {
         return *this;
       };
 

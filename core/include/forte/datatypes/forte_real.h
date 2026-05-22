@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2025 Pr3factor GmbH, ACIN, fortiss GmbH
- *                          Primetals Technologies Austria GmbH
- *                          Martin Erich Jobst
+ * Copyright (c) 2005 Profactor GmbH, ACIN, fortiss GmbH
+ *                          Primetals Technologies Austria GmbH,
+ *                          HR Agrartechnik GmbH, Martin Erich Jobst
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -18,6 +18,7 @@
  *   Martin Jobst - add equals function
  *                - add user-defined literal
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -44,61 +45,67 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_REAL() = default;
+      constexpr CIEC_REAL() = default;
 
-      CIEC_REAL(const CIEC_REAL &paValue) : CIEC_ANY_REAL() {
+      /* The following constructors and assignment operators use direct static_casts
+       * instead of calling the virtual setValue() to enable constexpr support.
+       * This is semantically equivalent to the original setValue() logic for these
+       * numeric types, as they did not implement additional range or overflow checks.
+       */
+
+      constexpr CIEC_REAL(const CIEC_REAL &paValue) : CIEC_ANY_REAL() {
         setValueSimple(paValue);
       }
 
-      CIEC_REAL(const CIEC_SINT &paValue) : CIEC_ANY_REAL() {
-        setValue(paValue);
+      constexpr explicit CIEC_REAL(const CIEC_SINT &paValue) : CIEC_ANY_REAL() {
+        setTFLOAT(static_cast<TForteFloat>(static_cast<TForteInt8>(paValue)));
       }
 
-      CIEC_REAL(const CIEC_INT &paValue) : CIEC_ANY_REAL() {
-        setValue(paValue);
+      constexpr explicit CIEC_REAL(const CIEC_INT &paValue) : CIEC_ANY_REAL() {
+        setTFLOAT(static_cast<TForteFloat>(static_cast<TForteInt16>(paValue)));
       }
 
-      CIEC_REAL(const CIEC_USINT &paValue) : CIEC_ANY_REAL() {
-        setValue(paValue);
+      constexpr explicit CIEC_REAL(const CIEC_USINT &paValue) : CIEC_ANY_REAL() {
+        setTFLOAT(static_cast<TForteFloat>(static_cast<TForteUInt8>(paValue)));
       }
 
-      CIEC_REAL(const CIEC_UINT &paValue) : CIEC_ANY_REAL() {
-        setValue(paValue);
+      constexpr explicit CIEC_REAL(const CIEC_UINT &paValue) : CIEC_ANY_REAL() {
+        setTFLOAT(static_cast<TForteFloat>(static_cast<TForteUInt16>(paValue)));
       }
 
-      explicit CIEC_REAL(const TValueType paValue) {
+      constexpr explicit CIEC_REAL(const TValueType paValue) {
         setTFLOAT(paValue);
       }
 
-      ~CIEC_REAL() override = default;
+      constexpr ~CIEC_REAL() override = default;
 
-      CIEC_REAL &operator=(const CIEC_REAL &paValue) {
+      constexpr CIEC_REAL &operator=(const CIEC_REAL &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
       }
 
-      CIEC_REAL &operator=(const CIEC_INT &paValue) {
-        setValue(paValue);
+      constexpr CIEC_REAL &operator=(const CIEC_INT &paValue) {
+        setTFLOAT(static_cast<TForteFloat>(static_cast<TForteInt16>(paValue)));
         return *this;
       }
 
-      CIEC_REAL &operator=(const CIEC_UINT &paValue) {
-        setValue(paValue);
+      constexpr CIEC_REAL &operator=(const CIEC_UINT &paValue) {
+        setTFLOAT(static_cast<TForteFloat>(static_cast<TForteUInt16>(paValue)));
         return *this;
       }
 
-      CIEC_REAL &operator=(const CIEC_SINT &paValue) {
-        setValue(paValue);
+      constexpr CIEC_REAL &operator=(const CIEC_SINT &paValue) {
+        setTFLOAT(static_cast<TForteFloat>(static_cast<TForteInt8>(paValue)));
         return *this;
       }
 
-      CIEC_REAL &operator=(const CIEC_USINT &paValue) {
-        setValue(paValue);
+      constexpr CIEC_REAL &operator=(const CIEC_USINT &paValue) {
+        setTFLOAT(static_cast<TForteFloat>(static_cast<TForteUInt8>(paValue)));
         return *this;
       }
 
-      CIEC_REAL operator-() const {
+      constexpr CIEC_REAL operator-() const {
         return CIEC_REAL(-1.0f * *this);
       }
 
@@ -106,7 +113,7 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_REAL to elementary 32 bit float
        */
-      operator TForteFloat() const {
+      constexpr operator TForteFloat() const {
         return getTFLOAT();
       }
 
@@ -116,7 +123,7 @@ namespace forte {
         setTFLOAT(0.0f);
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_REAL;
       }
 
@@ -153,11 +160,11 @@ namespace forte {
       static void castRealData(const CIEC_REAL &paSrcValue, CIEC_ANY &paDestValue);
   };
 
-  inline CIEC_REAL operator""_REAL(unsigned long long int paValue) {
+  consteval inline CIEC_REAL operator""_REAL(unsigned long long int paValue) {
     return CIEC_REAL(static_cast<CIEC_REAL::TValueType>(paValue));
   }
 
-  inline CIEC_REAL operator""_REAL(long double paValue) {
+  consteval inline CIEC_REAL operator""_REAL(long double paValue) {
     return CIEC_REAL(static_cast<CIEC_REAL::TValueType>(paValue));
   }
 

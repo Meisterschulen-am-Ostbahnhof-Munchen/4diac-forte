@@ -1,6 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2013 Profactor GmbH, ACIN, nxtControl GmbH, fortiss GmbH,
- *                          Primetals Technologies Austria GmbH
+ * Copyright (c) 2005 Profactor GmbH, ACIN, nxtControl GmbH, fortiss GmbH,
+ *                          Primetals Technologies Austria GmbH,
+ *                          HR Agrartechnik GmbH
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -13,6 +14,7 @@
  *      Monika Wenger, Stansilav Meduna
  *                - initial implementation and rework communication infrastructure
  *   Markus Meingast, Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -25,13 +27,13 @@ namespace forte {
    */
   class CIEC_ANY_ELEMENTARY : public CIEC_ANY {
     public:
-      CIEC_ANY_ELEMENTARY(const CIEC_ANY_ELEMENTARY &paVal) : CIEC_ANY() {
+      constexpr CIEC_ANY_ELEMENTARY(const CIEC_ANY_ELEMENTARY &paVal) : CIEC_ANY() {
         setLargestUInt(paVal.getLargestUInt());
       }
 
-      ~CIEC_ANY_ELEMENTARY() override = default;
+      constexpr ~CIEC_ANY_ELEMENTARY() override = default;
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_ANY;
       }
 
@@ -41,7 +43,7 @@ namespace forte {
       static EDataTypeID getElementaryDataTypeId(StringId paTypeNameId);
 
     protected:
-      CIEC_ANY_ELEMENTARY() = default;
+      constexpr CIEC_ANY_ELEMENTARY() = default;
 
     private:
       bool isTypeSpecifier(const char *paValue, const char *paHashPosition) const;
