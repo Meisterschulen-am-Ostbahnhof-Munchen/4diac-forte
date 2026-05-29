@@ -21,6 +21,14 @@ namespace forte::test {
       CFunctionBlockMock() : CFunctionBlock(CFBContainerMock::smDefaultFBContMock, scmFunctionBlockMockInterface, {}) {
       }
 
+      ~CFunctionBlockMock() override {
+        deinitialize();
+        if (!isDeinitialized()) {
+          deinitialize();
+          DEVLOG_ERROR("deinitialize() was not called before ~CFunctionBlockMock().\n");
+        }
+      }
+
       bool initialize() override {
         if (!CFunctionBlock::initialize()) {
           return false;
@@ -94,6 +102,7 @@ namespace forte::test {
 
     BOOST_CHECK_EQUAL(EMGMResponse::Ready, testee.changeExecutionState(EMGMCommandType::Start));
     BOOST_CHECK_EQUAL(CFunctionBlock::E_FBStates::Running, testee.getState());
+    testee.deinitialize();
   }
 
   void putTesteeIntoRun(CFunctionBlock &paTestee) {
@@ -128,6 +137,8 @@ namespace forte::test {
 
     BOOST_CHECK_EQUAL(EMGMResponse::Ready, killTestee.changeExecutionState(EMGMCommandType::Kill));
     BOOST_CHECK_EQUAL(CFunctionBlock::E_FBStates::Killed, killTestee.getState());
+    killTestee.deinitialize();
+    testee.deinitialize();
   }
 
   void putTesteeIntoStopped(CFunctionBlock &paTestee) {
@@ -161,6 +172,8 @@ namespace forte::test {
 
     BOOST_CHECK_EQUAL(EMGMResponse::Ready, resetTestee.changeExecutionState(EMGMCommandType::Reset));
     BOOST_CHECK_EQUAL(CFunctionBlock::E_FBStates::Idle, resetTestee.getState());
+    resetTestee.deinitialize();
+    testee.deinitialize();
   }
 
   void putTesteeIntoKilled(CFunctionBlock &paTestee) {
@@ -190,6 +203,7 @@ namespace forte::test {
     // we should be able to reset it
     BOOST_CHECK_EQUAL(EMGMResponse::Ready, testee.changeExecutionState(EMGMCommandType::Reset));
     BOOST_CHECK_EQUAL(CFunctionBlock::E_FBStates::Idle, testee.getState());
+    testee.deinitialize();
   }
 
   void testAllOtherCommands(CFunctionBlock &paTestee, CFunctionBlock::E_FBStates paState) {
@@ -222,6 +236,7 @@ namespace forte::test {
     testee.changeExecutionState(EMGMCommandType::Start);
     testee.changeExecutionState(EMGMCommandType::Kill);
     testAllOtherCommands(testee, CFunctionBlock::E_FBStates::Killed);
+    testee.deinitialize();
   }
 
   BOOST_AUTO_TEST_SUITE_END()

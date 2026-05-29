@@ -56,13 +56,21 @@ namespace forte {
     return true;
   }
 
-  void CFBContainer::deinitialize() {
+  void CFBContainer::deinitialize() noexcept {
+    if (mDeinitialized) {
+      return; // already deinitialized, guard against double-calls
+    }
+    mDeinitialized = true;
     for (auto it : getChildren()) {
       it->deinitialize();
     }
   }
 
   CFBContainer::~CFBContainer() {
+    if (!mDeinitialized) {
+      deinitialize();
+      DEVLOG_ERROR("deinitialize() was not called before ~CFBContainer.\n");
+    }
     for (TFBContainerList::iterator itRunner(mChildren.begin()); itRunner != mChildren.end(); ++itRunner) {
       delete (*itRunner);
     }
@@ -141,7 +149,8 @@ namespace forte {
     if (isChild(childIt, childName)) {
       CFBContainer *child = *childIt;
       if (paNameList.size() > 1) {
-        // we have more than one name in the fb name list. Hand the process on to the child if it is a dynamic container
+        // we have more than one name in the fb name list. Hand the process on to the child if it is a dynamic
+        // container
         if (child->isDynamicContainer()) {
           // remove the container from the name list
           return child->deleteFB(paNameList.subspan(1));

@@ -164,6 +164,7 @@ namespace forte::eclipse4diac::convert::test {
         createFB("InstanceName"_STRID, "eclipse4diac::convert::STRUCT_DEMUX_1Struct_Muxer_Test_Struct_4"_STRID,
                  forte::test::CFBContainerMock::smDefaultFBContMock);
     BOOST_CHECK(nullptr != fb);
+    fb->deinitialize();
     delete fb;
   }
 

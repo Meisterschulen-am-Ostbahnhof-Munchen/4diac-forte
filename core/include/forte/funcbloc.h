@@ -78,7 +78,7 @@ namespace forte {
                     "scmMaxInterfaceEvents must be a valid bitmask");
 
       bool initialize() override;
-      void deinitialize() override;
+      void deinitialize() noexcept override;
 
       ~CFunctionBlock() override;
 

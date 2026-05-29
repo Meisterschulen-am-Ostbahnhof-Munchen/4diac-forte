@@ -457,6 +457,7 @@ namespace forte::trace::test {
 
         paDevice.changeExecutionState(EMGMCommandType::Kill);
         paDevice.awaitShutdown();
+        paDevice.deinitialize();
       };
 
       {
