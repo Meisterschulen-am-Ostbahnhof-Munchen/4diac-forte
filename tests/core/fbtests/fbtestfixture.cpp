@@ -145,7 +145,7 @@ namespace forte::test {
   void CFBTestFixtureBase::performFBDeleteTests() {
     BOOST_CHECK(!mFBUnderTest->isCurrentlyDeleteable());
 
-    BOOST_CHECK_EQUAL(EMGMResponse::Ready, mFBUnderTest->changeExecutionState(EMGMCommandType::Stop));
+    BOOST_CHECK_EQUAL(EMGMResponse::Ready, mFBUnderTest->changeExecutionState(EMGMCommandType::Kill));
 
     BOOST_CHECK(mFBUnderTest->isCurrentlyDeleteable());
 

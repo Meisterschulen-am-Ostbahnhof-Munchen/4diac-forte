@@ -51,6 +51,10 @@ namespace forte::arch {
 
       static void sleepThread(unsigned int paMilliSeconds);
 
+      bool isSelf() const override {
+        return (0 != getThreadHandle()) && (GetCurrentThreadId() == GetThreadId(getThreadHandle()));
+      }
+
     private:
       virtual TThreadHandleType createThread(long paStackSize);
 

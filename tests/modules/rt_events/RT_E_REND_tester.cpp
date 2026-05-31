@@ -68,15 +68,12 @@ namespace forte::eclipse4diac::rtevents::test {
         if (mInternalECET == nullptr)
           return false;
         auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(maxWaitMs);
-        do {
+        while (std::chrono::steady_clock::now() < deadline) {
           if (!eventChainEmpty()) {
             return checkForSingleOutputEventOccurence(expectedEvent);
           }
-          do {
-            usleep(1);
-          } while (mInternalECET->isProcessingEvents());
           usleep(1000);
-        } while (std::chrono::steady_clock::now() < deadline);
+        }
         return checkForSingleOutputEventOccurence(expectedEvent);
       }
 
