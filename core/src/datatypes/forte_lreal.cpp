@@ -20,6 +20,7 @@
 #include <errno.h>
 #include "forte/datatypes/forte_lreal.h"
 #include "forte/datatypes/forte_real.h"
+#include "forte/datatypes/forte_bool.h"
 #include "forte/datatypes/forte_lint.h"
 #include "forte/datatypes/forte_ulint.h"
 #include "forte/datatypes/forte_string.h"
@@ -65,7 +66,9 @@ namespace forte {
       case e_INT:
       case e_DINT:
       case e_LINT:
-        setTDFLOAT(static_cast<TValueType>(static_cast<TForteInt64>(static_cast<const CIEC_LINT &>(paValue))));
+        // Cast to CIEC_ANY_SIGNED (common base of all signed integer types) avoids UB from
+        // casting sibling types (e.g. CIEC_SINT) directly to CIEC_LINT.
+        setTDFLOAT(static_cast<TValueType>(static_cast<const CIEC_ANY_SIGNED &>(paValue).getSignedValue()));
         break;
       case e_BYTE:
       case e_WORD:
@@ -74,8 +77,12 @@ namespace forte {
         // bit string will cast to the binary representation of the real value
         setValueSimple(paValue);
         break;
-      default: // UINT types
-        setTDFLOAT(static_cast<TValueType>(static_cast<TForteUInt64>(static_cast<const CIEC_ULINT &>(paValue))));
+      case e_BOOL:
+        setTDFLOAT(static_cast<TValueType>(static_cast<bool>(static_cast<const CIEC_BOOL &>(paValue))));
+        break;
+      default: // unsigned integer types (USINT, UINT, UDINT, ULINT)
+        // Cast to CIEC_ANY_UNSIGNED (common base) avoids UB from casting sibling types to CIEC_ULINT.
+        setTDFLOAT(static_cast<TValueType>(static_cast<const CIEC_ANY_UNSIGNED &>(paValue).getUnsignedValue()));
         break;
     }
   }

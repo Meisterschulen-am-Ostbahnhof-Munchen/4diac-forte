@@ -69,7 +69,12 @@ namespace forte::eclipse4diac::utils {
   }
 
   GEN_CSV_WRITER::~GEN_CSV_WRITER() {
-    closeCSVFile();
+    // Do not call closeCSVFile() here: static members (scmOK etc.) may already be
+    // destroyed at program exit, causing a static destruction order fiasco (UBSan vptr error).
+    if(nullptr != mCSVFile) {
+      forte_fclose(mCSVFile);
+      mCSVFile = nullptr;
+    }
   }
 
   void GEN_CSV_WRITER::readInputData(TEventID paEI) {
