@@ -1456,6 +1456,20 @@ namespace forte::test {
     BOOST_REQUIRE_EQUAL(static_cast<CIEC_LINT::TValueType>(CIEC_LINT(-18)), static_cast<CIEC_LINT::TValueType>(result));
   }
 
+  BOOST_AUTO_TEST_CASE(sub_reals) {
+    CIEC_REAL real1(20.5f);
+    CIEC_REAL real2(10.3f);
+    CIEC_REAL result(func_SUB(real1, real2));
+    BOOST_TEST(static_cast<CIEC_REAL::TValueType>(result) == 10.2f);
+  }
+
+  BOOST_AUTO_TEST_CASE(sub_lreals) {
+    CIEC_LREAL lreal1(20.5);
+    CIEC_LREAL lreal2(10.3);
+    CIEC_LREAL result(func_SUB(lreal1, lreal2));
+    BOOST_TEST(static_cast<CIEC_LREAL::TValueType>(result) == 10.2);
+  }
+
   BOOST_AUTO_TEST_CASE(Partial_Bool_NOT_Operation) {
     CIEC_LWORD lword(0xA5A5A5A5A5A5A5A5);
     CIEC_BOOL result;
