@@ -40,7 +40,7 @@ namespace forte {
   using TForteUInt32 = std::uint32_t; //!< 32 bit unsigned
   using TForteUInt64 = std::uint64_t; //!< 64 bit unsigned
 
-  using TForteChar = unsigned char; //!< 8 bit character
+  using TForteChar = unsigned char; //!< 8 bit character; will NEVER be signed
   using TForteWChar = char16_t; //!< 16 bit character
 
   using TForteFloat = float; //!< single precision IEEE float (32 Bit)
