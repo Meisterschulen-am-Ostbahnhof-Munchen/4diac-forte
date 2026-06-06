@@ -1,7 +1,8 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2025 Profactor GmbH, ACIN, TU Wien/ACIN,
+ * Copyright (c) 2005 Profactor GmbH, ACIN, TU Wien/ACIN,
  *                          Martin Erich Jobst,
- *                          Primetals Technologies Austria GmbH
+ *                          Primetals Technologies Austria GmbH,
+ *                          HR Agrartechnik GmbH
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -18,6 +19,7 @@
  *      nanoseconds, removed built-in type operator=, removed operator++
  *   Martin Jobst - add user-defined literal
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -38,19 +40,19 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_TIME() = default;
+      constexpr CIEC_TIME() = default;
 
-      CIEC_TIME(const CIEC_TIME &paValue) : CIEC_ANY_DURATION() {
+      constexpr CIEC_TIME(const CIEC_TIME &paValue) : CIEC_ANY_DURATION() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_TIME(const TValueType paValue) {
+      constexpr explicit CIEC_TIME(const TValueType paValue) {
         setLargestInt(paValue);
       }
 
-      ~CIEC_TIME() override = default;
+      constexpr ~CIEC_TIME() override = default;
 
-      CIEC_TIME &operator=(const CIEC_TIME &paValue) {
+      constexpr CIEC_TIME &operator=(const CIEC_TIME &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -60,11 +62,11 @@ namespace forte {
         return CIEC_TIME(-1 * static_cast<TValueType>(*this));
       }
 
-      explicit operator TValueType() const {
+      constexpr explicit operator TValueType() const {
         return getLargestInt();
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_TIME;
       }
 
@@ -101,7 +103,7 @@ namespace forte {
       void setFromNanoSeconds(TValueType paValue);
   };
 
-  inline CIEC_TIME operator""_TIME(unsigned long long int paValue) {
+  consteval inline CIEC_TIME operator""_TIME(unsigned long long int paValue) {
     return CIEC_TIME(static_cast<CIEC_TIME::TValueType>(paValue));
   }
 

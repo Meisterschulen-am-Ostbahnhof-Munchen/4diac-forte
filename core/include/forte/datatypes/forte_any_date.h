@@ -1,5 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 2005 - 2013 Profactor GmbH, ACIN, nxtControl GmbH, fortiss GmbH
+ * Copyright (c) 2005 Profactor GmbH, ACIN, nxtControl GmbH, fortiss GmbH
+ *                          HR Agrartechnik GmbH
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -11,6 +12,7 @@
  *    Thomas Strasser, Ingomar Müller, Martin Melik Merkumians, Alois Zoitl,
  *    Monika Wenger, Stansilav Meduna
  *      - initial implementation and rework communication infrastructure
+ *    Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -25,7 +27,7 @@ namespace forte {
     public:
       typedef TForteUInt64 TValueType;
 
-      ~CIEC_ANY_DATE() override = default;
+      constexpr ~CIEC_ANY_DATE() override = default;
 
       void reset() override {
         setTUINT64(0);
@@ -83,7 +85,7 @@ namespace forte {
       }
 
     protected:
-      CIEC_ANY_DATE() = default;
+      constexpr CIEC_ANY_DATE() = default;
 
     private:
       static TForteInt32 smTimeZoneOffset;

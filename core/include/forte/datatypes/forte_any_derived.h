@@ -23,10 +23,10 @@ namespace forte {
    */
   class CIEC_ANY_DERIVED : public CIEC_ANY {
     public:
-      ~CIEC_ANY_DERIVED() override = default;
+      constexpr ~CIEC_ANY_DERIVED() override = default;
 
     protected:
-      CIEC_ANY_DERIVED() = default;
+      constexpr CIEC_ANY_DERIVED() = default;
   };
 
   template<>

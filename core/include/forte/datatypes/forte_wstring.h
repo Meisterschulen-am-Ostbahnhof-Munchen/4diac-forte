@@ -150,7 +150,7 @@ namespace forte {
        */
       int toUTF16(TForteByte *paBuffer, unsigned int paBufferSize) const;
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_WSTRING;
       }
 

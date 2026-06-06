@@ -17,6 +17,7 @@
 forte_test_add_inc_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 forte_test_add_sourcefile_cpp(CIEC_ANY_VARIANT_test.cpp)
+forte_test_add_sourcefile_cpp(CIEC_ANY_constexpr_test.cpp)
 forte_test_add_sourcefile_cpp(CIEC_ANY_ELEMENTARY_VARIANT_test.cpp)
 forte_test_add_sourcefile_cpp(CIEC_ANY_MAGNITUDE_VARIANT_test.cpp)
 forte_test_add_sourcefile_cpp(CIEC_ANY_NUM_VARIANT_test.cpp)

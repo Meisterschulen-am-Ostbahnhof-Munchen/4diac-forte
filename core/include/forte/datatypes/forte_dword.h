@@ -1,8 +1,8 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2025 Profactor GmbH, ACIN,
+ * Copyright (c) 2005 Profactor GmbH, ACIN,
  *                          Johannes Kepler University Linz,
  *                          Primetals Technologies Austria GmbH,
- *                          Martin Erich Jobst
+ *                          HR Agrartechnik GmbH, Martin Erich Jobst
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -21,6 +21,7 @@
  *                  added castable CIEC types operator=
  *   Martin Jobst - add user-defined literal
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -50,49 +51,49 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_DWORD() = default;
+      constexpr CIEC_DWORD() = default;
 
-      CIEC_DWORD(const CIEC_DWORD &paValue) : CIEC_ANY_BIT() {
+      constexpr CIEC_DWORD(const CIEC_DWORD &paValue) : CIEC_ANY_BIT() {
         setValueSimple(paValue);
       }
 
-      CIEC_DWORD(const CIEC_WORD &paValue) : CIEC_ANY_BIT() {
+      constexpr CIEC_DWORD(const CIEC_WORD &paValue) : CIEC_ANY_BIT() {
         setValueSimple(paValue);
       }
 
-      CIEC_DWORD(const CIEC_BYTE &paValue) : CIEC_ANY_BIT() {
+      constexpr CIEC_DWORD(const CIEC_BYTE &paValue) : CIEC_ANY_BIT() {
         setValueSimple(paValue);
       }
 
-      CIEC_DWORD(const CIEC_BOOL &paValue) : CIEC_ANY_BIT() {
+      constexpr CIEC_DWORD(const CIEC_BOOL &paValue) : CIEC_ANY_BIT() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_DWORD(const TValueType paValue) {
+      constexpr explicit CIEC_DWORD(const TValueType paValue) {
         setTUINT32(paValue);
       }
 
-      ~CIEC_DWORD() override = default;
+      constexpr ~CIEC_DWORD() override = default;
 
-      CIEC_DWORD &operator=(const CIEC_DWORD &paValue) {
+      constexpr CIEC_DWORD &operator=(const CIEC_DWORD &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
       }
 
-      CIEC_DWORD &operator=(const CIEC_WORD &paValue) {
+      constexpr CIEC_DWORD &operator=(const CIEC_WORD &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
       }
 
-      CIEC_DWORD &operator=(const CIEC_BYTE &paValue) {
+      constexpr CIEC_DWORD &operator=(const CIEC_BYTE &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
       }
 
-      CIEC_DWORD &operator=(const CIEC_BOOL &paValue) {
+      constexpr CIEC_DWORD &operator=(const CIEC_BOOL &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -102,11 +103,11 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_DWORD to elementary word
        */
-      operator TForteDWord() const {
+      constexpr operator TForteDWord() const {
         return getTUINT32();
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_DWORD;
       }
 
@@ -144,7 +145,7 @@ namespace forte {
       }
   };
 
-  inline CIEC_DWORD operator""_DWORD(unsigned long long int paValue) {
+  consteval inline CIEC_DWORD operator""_DWORD(unsigned long long int paValue) {
     return CIEC_DWORD(static_cast<CIEC_DWORD::TValueType>(paValue));
   }
 

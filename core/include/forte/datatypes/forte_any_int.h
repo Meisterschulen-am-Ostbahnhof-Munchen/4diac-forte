@@ -1,5 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 2005 - 2014 Profactor GmbH, ACIN, fortiss GmbH
+ * Copyright (c) 2005 Profactor GmbH, ACIN, fortiss GmbH
+ *                          HR Agrartechnik GmbH
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -11,6 +12,7 @@
  *    Thomas Strasser, Ingomar Müller, Alois Zoitl, Monika Wenger,
  *    Martin Melik Markumians
  *      - initial implementation and rework communication infrastructure
+ *    Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -23,11 +25,11 @@ namespace forte {
    */
   class CIEC_ANY_INT : public CIEC_ANY_NUM {
     public:
-      explicit CIEC_ANY_INT(TLargestIntValueType paVal) {
+      constexpr explicit CIEC_ANY_INT(TLargestIntValueType paVal) {
         setSignedValue(paVal);
       }
 
-      ~CIEC_ANY_INT() override = default;
+      constexpr ~CIEC_ANY_INT() override = default;
 
       void reset() override {
         setLargestInt(0);
@@ -45,15 +47,15 @@ namespace forte {
         return getLargestInt();
       }
 
-      void setSignedValue(TLargestIntValueType mVal) {
+      constexpr void setSignedValue(TLargestIntValueType mVal) {
         setLargestInt(mVal);
       }
 
-      void setUnsignedValue(TLargestIntValueType mVal) {
+      constexpr void setUnsignedValue(TLargestIntValueType mVal) {
         setLargestInt(mVal);
       }
 
-      CIEC_ANY_INT() = default;
+      constexpr CIEC_ANY_INT() = default;
   };
 
   template<>

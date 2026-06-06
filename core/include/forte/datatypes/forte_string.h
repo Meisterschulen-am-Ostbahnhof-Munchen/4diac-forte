@@ -215,7 +215,7 @@ namespace forte {
         return nullptr;
       }
 
-      EDataTypeID getDataTypeID() const override final {
+      EDataTypeID getDataTypeID() const final {
         return e_STRING;
       }
 

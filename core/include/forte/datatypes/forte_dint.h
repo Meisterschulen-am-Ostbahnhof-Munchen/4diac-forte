@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2025 Profactor GmbH, ACIN, fortiss GmbH,
+ * Copyright (c) 2005 Profactor GmbH, ACIN, fortiss GmbH,
  *                          Primetals Technologies Austria GmbH,
- *                          Martin Erich Jobst
+ *                          HR Agrartechnik GmbH, Martin Erich Jobst
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -11,7 +11,7 @@
  *
  * Contributors:
  *   Thomas Strasser, Ingomar Müller, Alois Zoitl, Gerhard Ebenhofer,
- *     Ingo Hegny, Monika Wenger
+ *     Ingo Hegny, Monika Wenger, Martin Melik Merkumians
  *                - initial implementation and rework communication infrastructure
  *   Martin Melik Merkumians - make TForteInt8 constructor explicit, add implicit
  *                  cast constructors, removed built-in type operator=, added
@@ -19,6 +19,7 @@
  *   Martin Jobst - add user-defined literal
  *                - add ANY_SIGNED
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -45,39 +46,39 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_DINT() = default;
+      constexpr CIEC_DINT() = default;
 
-      CIEC_DINT(const CIEC_DINT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr CIEC_DINT(const CIEC_DINT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_DINT(const CIEC_INT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr explicit CIEC_DINT(const CIEC_INT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_DINT(const CIEC_UINT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr explicit CIEC_DINT(const CIEC_UINT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_DINT(const CIEC_SINT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr explicit CIEC_DINT(const CIEC_SINT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_DINT(const CIEC_USINT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr explicit CIEC_DINT(const CIEC_USINT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_DINT(const CIEC_ANY_INT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr explicit CIEC_DINT(const CIEC_ANY_INT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_DINT(const TValueType paValue) {
+      constexpr explicit CIEC_DINT(const TValueType paValue) {
         setTINT32(paValue);
       }
 
-      ~CIEC_DINT() override = default;
+      constexpr ~CIEC_DINT() override = default;
 
-      CIEC_DINT &operator=(const CIEC_DINT &paValue) {
+      constexpr CIEC_DINT &operator=(const CIEC_DINT &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -85,12 +86,12 @@ namespace forte {
 
       template<typename T,
                std::enable_if_t<std::is_same_v<typename mpl::implicit_cast_t<T, CIEC_DINT>, CIEC_DINT>, int> = 0>
-      CIEC_DINT &operator=(const T &paValue) {
+      constexpr CIEC_DINT &operator=(const T &paValue) {
         setValueSimple(paValue);
         return *this;
       }
 
-      CIEC_DINT operator-() const {
+      constexpr CIEC_DINT operator-() const {
         return CIEC_DINT(-1 * static_cast<TValueType>(*this));
       }
 
@@ -98,16 +99,16 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_DINT to elementary 32 bit integer
        */
-      explicit operator TForteInt32() const {
+      constexpr explicit operator TForteInt32() const {
         return getTINT32();
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_DINT;
       }
   };
 
-  inline CIEC_DINT operator""_DINT(unsigned long long int paValue) {
+  consteval inline CIEC_DINT operator""_DINT(unsigned long long int paValue) {
     return CIEC_DINT(static_cast<CIEC_DINT::TValueType>(paValue));
   }
 

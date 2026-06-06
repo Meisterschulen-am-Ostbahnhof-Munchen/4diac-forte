@@ -1,5 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2022 Primetals Technologies Austria GmbH
+ *                          HR Agrartechnik GmbH
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -10,6 +11,7 @@
  * Contributors:
  *    Martin Melik Merkumians
  *      - initial implementation and rework communication infrastructure
+ *    Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -44,7 +46,7 @@ namespace forte {
                std::enable_if_t<
                    std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
                    int> = 0>
-      friend bool operator==(const T &paLeft, const U &paRight) {
+      friend constexpr bool operator==(const T &paLeft, const U &paRight) {
         return static_cast<typename T::TValueType>(paLeft) == static_cast<typename T::TValueType>(paRight);
       }
 
@@ -53,7 +55,7 @@ namespace forte {
                std::enable_if_t<
                    std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
                    int> = 0>
-      friend bool operator!=(const T &paLeft, const U &paRight) {
+      friend constexpr bool operator!=(const T &paLeft, const U &paRight) {
         return !(paLeft == paRight);
       }
 
@@ -62,7 +64,7 @@ namespace forte {
                std::enable_if_t<
                    std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
                    int> = 0>
-      friend bool operator<(const T &paLeft, const U &paRight) {
+      friend constexpr bool operator<(const T &paLeft, const U &paRight) {
         return static_cast<typename T::TValueType>(paLeft) < static_cast<typename T::TValueType>(paRight);
       }
 
@@ -71,7 +73,7 @@ namespace forte {
                std::enable_if_t<
                    std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
                    int> = 0>
-      friend bool operator>(const T &paLeft, const U &paRight) {
+      friend constexpr bool operator>(const T &paLeft, const U &paRight) {
         return static_cast<typename T::TValueType>(paLeft) > static_cast<typename T::TValueType>(paRight);
       }
 
@@ -80,7 +82,7 @@ namespace forte {
                std::enable_if_t<
                    std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
                    int> = 0>
-      friend bool operator<=(const T &paLeft, const U &paRight) {
+      friend constexpr bool operator<=(const T &paLeft, const U &paRight) {
         return paLeft == paRight || paLeft < paRight;
       }
 
@@ -89,32 +91,32 @@ namespace forte {
                std::enable_if_t<
                    std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
                    int> = 0>
-      friend bool operator>=(const T &paLeft, const U &paRight) {
+      friend constexpr bool operator>=(const T &paLeft, const U &paRight) {
         return paLeft == paRight || paLeft > paRight;
       }
 
       template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DURATION, T>, int> = 0>
-      friend T operator+(const T &paLeft, const T &paRight) {
+      friend constexpr T operator+(const T &paLeft, const T &paRight) {
         return T(static_cast<typename T::TValueType>(paLeft) + static_cast<typename T::TValueType>(paRight));
       }
 
       template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DURATION, T>, int> = 0>
-      friend T operator-(const T &paLeft, const T &paRight) {
+      friend constexpr T operator-(const T &paLeft, const T &paRight) {
         return T(static_cast<typename T::TValueType>(paLeft) - static_cast<typename T::TValueType>(paRight));
       }
 
-      ~CIEC_ANY_DURATION() override = default;
+      constexpr ~CIEC_ANY_DURATION() override = default;
 
       void reset() override {
         setLargestInt(0);
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_ANY;
       }
 
     protected:
-      CIEC_ANY_DURATION() = default;
+      constexpr CIEC_ANY_DURATION() = default;
       void timeElementsToString(std::string &paTargetBuf, int64_t paTimeElement, const std::string &paUnit) const;
   };
 

@@ -114,11 +114,6 @@ namespace forte::com_infra {
       for (size_t i = 0; i < paSize; ++i) {
         unNeededBufferSize += getRequiredSerializationSize(*apoSDs[i]);
       }
-      // serializeDataPointArray writes a 1-byte Null tag when paSize == 0;
-      // ensure the buffer is large enough even when no SD data points are present.
-      if (paSize == 0) {
-        unNeededBufferSize = 1;
-      }
       TForteByte *paUsedBuffer = nullptr;
       TForteByte *paDynSerBuffer = nullptr;
       // FIXME grow buffer instead of allocating every time a new one

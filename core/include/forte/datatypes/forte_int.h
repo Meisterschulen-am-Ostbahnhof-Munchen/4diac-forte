@@ -1,7 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2025 Profactor GmbH, ACIN,
+ * Copyright (c) 2005 Profactor GmbH, ACIN, fortiss GmbH
  *                          Primetals Technologies Austria GmbH,
- *                          Martin Erich Jobst
+ *                          HR Agrartechnik GmbH, Martin Erich Jobst
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -10,15 +10,16 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *   Thomas Strasser, Ingomar Müller, Alois Zoitl, Gerhard Ebenhofer
- *     Ingo Hegny, Monika Wenger
+ *   Thomas Strasser, Ingomar Müller, Alois Zoitl, Gerhard Ebenhofer,
+ *     Ingo Hegny, Monika Wenger, Martin Melik Merkumians
  *                - initial implementation and rework communication infrastructure
  *   Martin Melik Merkumians - make TForteInt16 constructor explicit, added valid
-                    cast constructors, removed built-in type operator=, added
+ *                  cast constructors, removed built-in type operator=, added
  *                  castable CIEC types operator=
  *   Martin Jobst - add user-defined literal
  *                - add ANY_SIGNED
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add constexpr
  *******************************************************************************/
 
 #pragma once
@@ -44,31 +45,31 @@ namespace forte {
       [[deprecated("Please use the corresponding numeric_limits template")]]
       static constexpr TValueType scmMaxVal = std::numeric_limits<TValueType>::max();
 
-      CIEC_INT() = default;
+      constexpr CIEC_INT() = default;
 
-      CIEC_INT(const CIEC_INT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr CIEC_INT(const CIEC_INT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_INT(const CIEC_SINT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr CIEC_INT(const CIEC_SINT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      CIEC_INT(const CIEC_USINT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr CIEC_INT(const CIEC_USINT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_INT(const CIEC_ANY_INT &paValue) : CIEC_ANY_SIGNED() {
+      constexpr explicit CIEC_INT(const CIEC_ANY_INT &paValue) : CIEC_ANY_SIGNED() {
         setValueSimple(paValue);
       }
 
-      explicit CIEC_INT(const TValueType paValue) {
+      constexpr explicit CIEC_INT(const TValueType paValue) {
         setTINT16(paValue);
       }
 
-      ~CIEC_INT() override = default;
+      constexpr ~CIEC_INT() override = default;
 
-      CIEC_INT &operator=(const CIEC_INT &paValue) {
+      constexpr CIEC_INT &operator=(const CIEC_INT &paValue) {
         // Simple value assignment - no self assignment check needed
         setValueSimple(paValue);
         return *this;
@@ -76,12 +77,12 @@ namespace forte {
 
       template<typename T,
                std::enable_if_t<std::is_same_v<typename mpl::implicit_cast_t<T, CIEC_INT>, CIEC_INT>, int> = 0>
-      CIEC_INT &operator=(const T &paValue) {
+      constexpr CIEC_INT &operator=(const T &paValue) {
         setValueSimple(paValue);
         return *this;
       }
 
-      CIEC_INT operator-() const {
+      constexpr CIEC_INT operator-() const {
         return CIEC_INT(static_cast<TValueType>(-1 * static_cast<TValueType>(*this)));
       }
 
@@ -89,16 +90,16 @@ namespace forte {
        *
        *   Conversion operator for converting CIEC_INT to elementary 16 bit integer
        */
-      explicit operator TForteInt16() const {
+      constexpr explicit operator TForteInt16() const {
         return getTINT16();
       }
 
-      EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_INT;
       }
   };
 
-  inline CIEC_INT operator""_INT(unsigned long long int paValue) {
+  consteval inline CIEC_INT operator""_INT(unsigned long long int paValue) {
     return CIEC_INT(static_cast<CIEC_INT::TValueType>(paValue));
   }
 
