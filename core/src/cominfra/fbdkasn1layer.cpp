@@ -384,30 +384,8 @@ namespace forte::com_infra {
     --nRetVal; // Length of the tag
 
     if (nRetVal <= paStreamSize) {
-      const TForteByte *acDataPtr = paDataPoint.getConstDataPtr();
-
-      if constexpr (std::endian::native == std::endian::little) {
-#if defined(__ARMEL__) && !defined(__VFP_FP__) // Little endian ARM with old mixed endian FPA float ABI needs to swap
-        if (CIEC_ANY::e_LREAL == paDataPoint.getDataTypeID()) {
-          TForteUInt32 anSwapped[2];
-          anSwapped[0] = reinterpret_cast<const TForteUInt32 *>(acDataPtr)[1];
-          anSwapped[1] = reinterpret_cast<const TForteUInt32 *>(acDataPtr)[0];
-          acDataPtr = reinterpret_cast<const TForteByte *>(&anSwapped[0]);
-        }
-#endif // defined(__ARMEL__) && ! defined(__VFP_FP__)
-        for (int i = 0; i < nRetVal; i++) {
-          paBytes[(nRetVal - 1) - i] = acDataPtr[i];
-        }
-      } else {
-        if (CIEC_ANY::e_REAL != paDataPoint.getDataTypeID()) {
-          for (int i = 0; i < nRetVal; i++) {
-            paBytes[(nRetVal - 1) - i] = acDataPtr[(sizeof(CIEC_ANY::TLargestUIntValueType) - 1) - i];
-          }
-        } else {
-          for (unsigned int i = 0; i < nRetVal; i++) {
-            paBytes[(nRetVal - 1) - i] = acDataPtr[(sizeof(TForteFloat) - 1) - i];
-          }
-        }
+      for (int i = 0; i < nRetVal; i++) {
+        paBytes[(nRetVal - 1) - i] = paDataPoint.getScalarByte(i);
       }
     } else {
       nRetVal = -1;
@@ -646,38 +624,17 @@ namespace forte::com_infra {
     int nValueSize = csmDataTags[paIECData.getDataTypeID()][1] - 1;
 
     if (paStreamSize >= nValueSize) {
-      TForteByte *acDataPtr = paIECData.getDataPtr();
-
       // setting mAnyData to 0
-      *((CIEC_ANY::TLargestUIntValueType *) acDataPtr) = 0;
+      paIECData.setLargestUInt(0);
 
       // we only need to check for SINT, INT, and DINT as LINT will fill all bytes
       if (paIECData.getDataTypeID() <= CIEC_ANY::e_DINT && (paBytes[0] & 0x80)) {
         // we received a negative number set all bits to true
-        *((CIEC_ANY::TLargestIntValueType *) acDataPtr) = -1;
+        paIECData.setLargestInt(-1);
       }
 
-      if constexpr (std::endian::native == std::endian::little) {
-        for (int i = 0; i < nValueSize; i++) {
-          acDataPtr[i] = paBytes[(nValueSize - 1) - i];
-        }
-#if defined(__ARMEL__) && !defined(__VFP_FP__) // Little endian ARM with old mixed endian FPA float ABI needs to swap
-        if (CIEC_ANY::e_LREAL == paIECData.getDataTypeID()) {
-          TForteUInt32 nTmp = reinterpret_cast<const TForteUInt32 *>(acDataPtr)[1];
-          ((TForteUInt32 *) acDataPtr)[1] = reinterpret_cast<const TForteUInt32 *>(acDataPtr)[0];
-          reinterpret_cast<TForteUInt32 *>(acDataPtr)[0] = nTmp;
-        }
-#endif // defined(__ARMEL__) && ! defined(__VFP_FP__)
-      } else {
-        if (CIEC_ANY::e_REAL != paIECData.getDataTypeID()) {
-          for (unsigned int i = 0; i < nValueSize; i++) {
-            acDataPtr[(sizeof(CIEC_ANY::TLargestUIntValueType) - 1) - i] = paBytes[(nValueSize - 1) - i];
-          }
-        } else { // FLOAT must be processed this way, because it is always saved in the first 4 bytes
-          for (unsigned int i = 0; i < nValueSize; i++) {
-            acDataPtr[(sizeof(TForteFloat) - 1) - i] = paBytes[(nValueSize - 1) - i];
-          }
-        }
+      for (int i = 0; i < nValueSize; i++) {
+        paIECData.setScalarByte(i, paBytes[(nValueSize - 1) - i]);
       }
       nRetVal = nValueSize;
     }

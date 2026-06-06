@@ -27,6 +27,7 @@
 #include <span>
 #include <limits>
 #include <type_traits>
+#include <cassert>
 #include "forte/typelib.h"
 #include "forte/iec61131_cast_helper.h"
 #include "forte/config/forte_config.h"
@@ -90,6 +91,28 @@ namespace forte {
 
       typedef TForteUInt64 TLargestUIntValueType;
       typedef TForteInt64 TLargestIntValueType;
+
+      // Enforce type width and properties for canonical storage
+      static_assert(sizeof(TLargestUIntValueType) == 8, "TLargestUIntValueType must be 64-bit");
+      static_assert(sizeof(TLargestIntValueType) == 8, "TLargestIntValueType must be 64-bit");
+      static_assert(sizeof(TLargestUIntValueType) == sizeof(TLargestIntValueType),
+                    "Largest integer types must have the same size for UAnyData");
+
+      // Ensure canonical storage types remain integral and correctly signed
+      static_assert(std::is_integral_v<TLargestUIntValueType> && std::is_unsigned_v<TLargestUIntValueType>,
+                    "TLargestUIntValueType must be an unsigned integral type");
+      static_assert(std::is_integral_v<TLargestIntValueType> && std::is_signed_v<TLargestIntValueType>,
+                    "TLargestIntValueType must be a signed integral type");
+
+      // Enforce character type contracts used by getChar8()/getChar16()
+      static_assert(std::is_unsigned_v<TForteChar> && sizeof(TForteChar) == 1,
+                    "TForteChar must be an unsigned 8-bit character type");
+      static_assert(std::is_unsigned_v<TForteWChar> && sizeof(TForteWChar) == 2,
+                    "TForteWChar must be an unsigned 16-bit character type");
+
+      // Enforce float type contracts used by bitCastFloatToUInt32/bitCastDFloatToUInt64
+      static_assert(sizeof(TForteFloat) == 4, "TForteFloat must be a 32-bit float");
+      static_assert(sizeof(TForteDFloat) == 8, "TForteDFloat must be a 64-bit float");
 
       template<typename U, typename T>
       static auto cast(const T paFromCast) -> typename mpl::implicit_or_explicit_cast_t<T, U> {
@@ -186,17 +209,84 @@ namespace forte {
        *  \return Returns TForteByte*
        */
 
-      TForteByte *getDataPtr() {
-        return mAnyData.mData;
+      /*! \brief Get a byte from the canonical scalar storage by its significance index.
+       *
+       * @param paByteIndex The significance index (0 = Least Significant Byte, 1 = LSB+1, ...)
+       * @return The byte value at the given significance index.
+       */
+      TForteByte getScalarByte(size_t paByteIndex) const {
+        assert(paByteIndex < sizeof(TLargestUIntValueType));
+        size_t shift = paByteIndex;
+#if defined(__ARMEL__) && !defined(__VFP_FP__)
+        // On little-endian ARM with FPA floating point (mixed-endian), 64-bit doubles (LREAL)
+        // are stored as two little-endian 32-bit words, but the words themselves are in big-endian order.
+        // This means significance indices 0..3 (LSB word) are at bit positions 32..63, and vice-versa.
+        if (e_LREAL == getDataTypeID()) {
+          shift = (paByteIndex < 4) ? (paByteIndex + 4) : (paByteIndex - 4);
+        }
+#endif
+        return static_cast<TForteByte>((mAnyData.mLargestUInt >> (shift * 8)) & 0xFF);
       }
 
-      /*! \brief Get a const pointer to the union char array
+      /*! \brief Set a byte in the canonical scalar storage by its significance index.
+       *
+       * @param paByteIndex The significance index (0 = Least Significant Byte, 1 = LSB+1, ...)
+       * @param paValue The byte value to set.
+       */
+      void setScalarByte(size_t paByteIndex, TForteByte paValue) {
+        assert(paByteIndex < sizeof(TLargestUIntValueType));
+        size_t shift = paByteIndex;
+#if defined(__ARMEL__) && !defined(__VFP_FP__)
+        // On little-endian ARM with FPA floating point (mixed-endian), 64-bit doubles (LREAL)
+        // are stored as two little-endian 32-bit words, but the words themselves are in big-endian order.
+        // This means significance indices 0..3 (LSB word) are at bit positions 32..63, and vice-versa.
+        if (e_LREAL == getDataTypeID()) {
+          shift = (paByteIndex < 4) ? (paByteIndex + 4) : (paByteIndex - 4);
+        }
+#endif
+        TLargestUIntValueType mask = ~(static_cast<TLargestUIntValueType>(0xFF) << (shift * 8));
+        mAnyData.mLargestUInt =
+            (mAnyData.mLargestUInt & mask) | (static_cast<TLargestUIntValueType>(paValue) << (shift * 8));
+      }
+
+      /*! \brief Get a safe span-view of the 8-byte canonical scalar storage.
+       *
+       *  \return Returns a span covering the internal scalar storage.
+       */
+      std::span<TForteByte, sizeof(TLargestIntValueType)> getScalarByteView() {
+        return std::span<TForteByte, sizeof(TLargestIntValueType)>(getDataPtr(), sizeof(TLargestIntValueType));
+      }
+
+      /*! \brief Get a safe const span-view of the 8-byte canonical scalar storage.
+       *
+       *  \return Returns a const span covering the internal scalar storage.
+       */
+      std::span<const TForteByte, sizeof(TLargestIntValueType)> getConstScalarByteView() const {
+        return std::span<const TForteByte, sizeof(TLargestIntValueType)>(getConstDataPtr(),
+                                                                         sizeof(TLargestIntValueType));
+      }
+
+      /*! \brief Get a raw pointer to the internal 8-byte scalar storage.
+       *
+       *  IMPORTANT: This only points to the scalar union (8 bytes). For complex types (STRING, ARRAY),
+       *  use the type-specific accessors.
+       *
+       *  \return Returns TForteByte*
+       */
+      TForteByte *getDataPtr() {
+        return reinterpret_cast<TForteByte *>(&mAnyData);
+      }
+
+      /*! \brief Get a raw const pointer to the internal 8-byte scalar storage.
+       *
+       *  IMPORTANT: This only points to the scalar union (8 bytes). For complex types (STRING, ARRAY),
+       *  use the type-specific accessors.
        *
        *  \return Returns const TForteByte*
        */
 
       const TForteByte *getConstDataPtr() const {
-        return mAnyData.mData;
+        return reinterpret_cast<const TForteByte *>(&mAnyData);
       }
 
       /*! \brief Converts string value to data type value
@@ -290,6 +380,44 @@ namespace forte {
 #endif
 
     protected:
+      // Bit-pattern preservation helpers to maintain standard compliance and avoid UB.
+      static TLargestUIntValueType bitCastSignedToUInt64(TLargestIntValueType paValue) {
+        return std::bit_cast<TLargestUIntValueType>(paValue);
+      }
+      static TLargestIntValueType bitCastUInt64ToSigned(TLargestUIntValueType paValue) {
+        return std::bit_cast<TLargestIntValueType>(paValue);
+      }
+      static TForteUInt32 bitCastFloatToUInt32(TForteFloat paValue) {
+        return std::bit_cast<TForteUInt32>(paValue);
+      }
+      static TForteFloat bitCastUInt32ToFloat(TForteUInt32 paValue) {
+        return std::bit_cast<TForteFloat>(paValue);
+      }
+      static TLargestUIntValueType bitCastDFloatToUInt64(TForteDFloat paValue) {
+        return std::bit_cast<TLargestUIntValueType>(paValue);
+      }
+      static TForteDFloat bitCastUInt64ToDFloat(TLargestUIntValueType paValue) {
+        return std::bit_cast<TForteDFloat>(paValue);
+      }
+
+      // Canonical storage helpers to maintain UAnyData invariants.
+      // All scalar writes MUST funnel through these helpers to ensure consistency.
+      void setUnsignedCanonical(TLargestUIntValueType paValue) {
+        mAnyData.mLargestUInt = paValue;
+      }
+      void setSignedCanonical(TLargestIntValueType paValue) {
+        mAnyData.mLargestUInt = bitCastSignedToUInt64(paValue);
+      }
+
+      void setFloatCanonical(TForteFloat paValue) {
+        // Explicitly zero-extend the 32-bit float bit pattern into the 64-bit canonical field
+        mAnyData.mLargestUInt = static_cast<TLargestUIntValueType>(bitCastFloatToUInt32(paValue));
+      }
+
+      void setDFloatCanonical(TForteDFloat paValue) {
+        mAnyData.mLargestUInt = bitCastDFloatToUInt64(paValue);
+      }
+
       /*! \brief copy the union data
        *
        * To be used for efficiently implementing assignment operators where it is
@@ -299,173 +427,121 @@ namespace forte {
         mAnyData = paValue.mAnyData;
       }
 
-      /*! \brief Get Method for complex datatypes
+      /*! \brief Set Method for complex datatypes
        *  A virtual function for datatypes who can't be copied by the union assignment
+       *
+       *  IMPORTANT: The following set* methods maintain the invariant that mLargestUInt
+       *  is the canonical storage for all scalar types (integer, bool, char, float).
+       *  When adding new scalar types or modification methods, ensure this canonical field is updated.
        */
 
       void setTBOOL8(bool src) {
-        mAnyData.mLargestUInt = TLargestUIntValueType(src);
+        setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
       void setTUINT32(TForteUInt32 src) { // also used for TForteDWord
-        mAnyData.mLargestUInt = TLargestUIntValueType(src);
+        setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
       void setTUINT16(TForteUInt16 src) { // also used for TForteWord
-        mAnyData.mLargestUInt = TLargestUIntValueType(src);
+        setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
       void setTUINT8(TForteUInt8 src) { // also used for TForteByte
-        mAnyData.mLargestUInt = TLargestUIntValueType(src);
+        setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
       void setTINT32(TForteInt32 src) {
-        mAnyData.mLargestInt = TLargestIntValueType(src);
+        setSignedCanonical(static_cast<TLargestIntValueType>(src));
       }
 
       void setTINT16(TForteInt16 src) {
-        mAnyData.mLargestInt = TLargestIntValueType(src);
+        setSignedCanonical(static_cast<TLargestIntValueType>(src));
       }
 
       void setTINT8(TForteInt8 src) {
-        mAnyData.mLargestInt = TLargestIntValueType(src);
+        setSignedCanonical(static_cast<TLargestIntValueType>(src));
       }
 
       void setChar(TForteChar src) {
-        mAnyData.mLargestUInt = TLargestUIntValueType(src);
+        setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
       void setChar16(TForteWChar src) {
-        mAnyData.mLargestUInt = TLargestUIntValueType(src);
+        setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
       void setTFLOAT(TForteFloat src) {
-        mAnyData.mFloat = TForteFloat(src);
+        setFloatCanonical(src);
       }
 
       void setTDFLOAT(TForteDFloat src) {
-        mAnyData.mDFloat = TForteDFloat(src);
+        setDFloatCanonical(src);
       }
 
       void setTUINT64(TForteUInt64 src) { // also used for LWORD
-        mAnyData.mLargestUInt = TLargestUIntValueType(src);
+        setUnsignedCanonical(static_cast<TLargestUIntValueType>(src));
       }
 
       void setTINT64(TForteInt64 src) {
-        mAnyData.mLargestInt = TLargestIntValueType(src);
+        setSignedCanonical(static_cast<TLargestIntValueType>(src));
       }
 
       bool getTBOOL8() const {
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mBool;
-        } else {
-          return (mAnyData.mLargestUInt != 0);
-        }
+        return (mAnyData.mLargestUInt != 0);
       }
 
       TForteUInt32 getTUINT32() const { // also used for TForteDWord
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mUInt32;
-        } else {
-          return static_cast<TForteUInt32>(mAnyData.mLargestUInt);
-        }
+        return static_cast<TForteUInt32>(mAnyData.mLargestUInt);
       }
 
       TForteUInt16 getTUINT16() const { // also used for TForteWord
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mUInt16;
-        } else {
-          return static_cast<TForteUInt16>(mAnyData.mLargestUInt);
-        }
+        return static_cast<TForteUInt16>(mAnyData.mLargestUInt);
       }
 
       TForteUInt8 getTUINT8() const { // also used for TForteByte
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mUInt8;
-        } else {
-          return static_cast<TForteUInt8>(mAnyData.mLargestUInt);
-        }
+        return static_cast<TForteUInt8>(mAnyData.mLargestUInt);
       }
 
       TForteInt32 getTINT32() const {
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mInt32;
-        } else {
-          return static_cast<TForteInt32>(mAnyData.mLargestInt);
-        }
+        return static_cast<TForteInt32>(bitCastUInt64ToSigned(mAnyData.mLargestUInt));
       }
 
       TForteInt16 getTINT16() const {
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mInt16;
-        } else {
-          return static_cast<TForteInt16>(mAnyData.mLargestInt);
-        }
+        return static_cast<TForteInt16>(bitCastUInt64ToSigned(mAnyData.mLargestUInt));
       }
 
       TForteInt8 getTINT8() const {
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mInt8;
-        } else {
-          return static_cast<TForteInt8>(mAnyData.mLargestInt);
-        }
+        return static_cast<TForteInt8>(bitCastUInt64ToSigned(mAnyData.mLargestUInt));
       }
 
       TForteChar getChar8() const {
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mChar8;
-        } else {
-          return static_cast<TForteChar>(mAnyData.mLargestInt);
-        }
+        // TForteChar is defined as an unsigned 8-bit character type (see static_assert below);
+        // mLargestUInt is the canonical store for all unsigned/char types.
+        return static_cast<TForteChar>(mAnyData.mLargestUInt);
       }
 
       TForteWChar getChar16() const {
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mWChar16;
-        } else {
-          return static_cast<TForteWChar>(mAnyData.mLargestInt);
-        }
+        // TForteWChar is defined as a 16-bit character type (see static_assert below);
+        // mLargestUInt is the canonical store for all unsigned/char types.
+        return static_cast<TForteWChar>(mAnyData.mLargestUInt);
       }
 
       TForteUInt64 getTUINT64() const { // also used for LWORD
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mUInt64;
-        } else {
-          return static_cast<TForteUInt64>(mAnyData.mLargestUInt);
-        }
+        return static_cast<TForteUInt64>(mAnyData.mLargestUInt);
       }
 
       TForteInt64 getTINT64() const {
-        if constexpr (std::endian::native == std::endian::little) {
-          return mAnyData.mInt64;
-        } else {
-          return static_cast<TForteInt64>(mAnyData.mLargestInt);
-        }
+        return bitCastUInt64ToSigned(mAnyData.mLargestUInt);
       }
 
       //!< get-Methods are Big/Little Endian independent
       TForteFloat getTFLOAT() const {
-        return (TForteFloat) mAnyData.mFloat;
+        return bitCastUInt32ToFloat(static_cast<TForteUInt32>(mAnyData.mLargestUInt));
       }
 
       TForteDFloat getTDFLOAT() const {
-        return TForteDFloat(mAnyData.mDFloat);
-      }
-
-      TLargestUIntValueType getLargestUInt() const {
-        return mAnyData.mLargestUInt;
-      }
-
-      void setLargestUInt(TLargestUIntValueType paVal) {
-        mAnyData.mLargestUInt = paVal;
-      }
-
-      TLargestIntValueType getLargestInt() const {
-        return mAnyData.mLargestInt;
-      }
-
-      void setLargestInt(TLargestIntValueType paVal) {
-        mAnyData.mLargestInt = paVal;
+        return bitCastUInt64ToDFloat(mAnyData.mLargestUInt);
       }
 
       TForteByte *getGenData() {
@@ -483,46 +559,41 @@ namespace forte {
       static StringId parseTypeName(const char *paValue, const char *paHashPos);
 
     public:
+      TLargestUIntValueType getLargestUInt() const {
+        return mAnyData.mLargestUInt;
+      }
+
+      void setLargestUInt(TLargestUIntValueType paVal) {
+        setUnsignedCanonical(paVal);
+      }
+
+      TLargestIntValueType getLargestInt() const {
+        return bitCastUInt64ToSigned(mAnyData.mLargestUInt);
+      }
+
+      void setLargestInt(TLargestIntValueType paVal) {
+        setSignedCanonical(paVal);
+      }
+
       CIEC_ANY(const CIEC_ANY &) = delete;
       CIEC_ANY &operator=(const CIEC_ANY &paValue) = delete;
 
     private:
-      // Anonymous union holding the data value of our IEC data type
+      // Anonymous union holding the data value of our IEC data type.
+      // mLargestUInt is the single source of truth for ALL scalar types (integer, bool, char, float).
+      // IMPORTANT: This field MUST always hold the canonical value for all scalar types.
+      // When writing to this union, ensure mLargestUInt is updated (e.g., via std::bit_cast for floats).
+      // The smaller-typed, floating-point and byte-array members have been removed to prevent divergence and union
+      // punning UB.
       union UAnyData {
-          bool mBool;
-
-          TForteByte mByte;
-          TForteWord mWord;
-          TForteDWord mDWord;
-
-          TForteInt8 mInt8;
-          TForteInt16 mInt16;
-          TForteInt32 mInt32;
-
-          TForteUInt8 mUInt8;
-          TForteUInt16 mUInt16;
-          TForteUInt32 mUInt32;
-
-          TForteChar mChar8;
-          TForteWChar mWChar16;
-
-          TForteFloat mFloat;
-          TForteDFloat mDFloat;
-
-          TForteInt64 mInt64;
-          TForteUInt64 mUInt64;
-          TForteByte mData[sizeof(TForteUInt64)]; //!< For data extraction in big endian machines
           TLargestUIntValueType mLargestUInt;
-          TLargestIntValueType mLargestInt;
-          /*! \brief A pointer to general data that can be used for data types needing other data than that contained in
-           * the union
-           *
-           * This is needed as the current design does not allow that the size of data types when created is different
-           * from the size of the CIEC_ANY class. This data value will be used for example by string or array.
+          /*! \brief A pointer to general data for types whose payload does not fit in the union
+           * (e.g. STRING, ARRAY).
            */
           TForteByte *mGenData;
       };
-
+      static_assert(sizeof(UAnyData) == sizeof(TLargestUIntValueType),
+                    "UAnyData must match the size of the largest scalar type");
       UAnyData mAnyData;
 
       constexpr static size_t csmDataLengthLookup[] = {0, 1, 1, 2, 4, 8, 1, 2, 4, 8, 1, 2, 4, 8, 8,
