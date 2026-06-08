@@ -14,6 +14,7 @@
  *******************************************************************************/
 #pragma once
 
+#include <compare>
 #include <variant>
 
 #include "forte/datatypes/forte_any.h"
@@ -96,7 +97,7 @@ namespace forte {
       using TIecAnyElementaryVariantType::variant;
       using TIecAnyElementaryVariantType::operator=;
       template<class...>
-      static inline constexpr bool always_false_v = false;
+      static constexpr bool always_false_v = false;
 
       CIEC_ANY_ELEMENTARY_VARIANT(const CIEC_ANY_ELEMENTARY_VARIANT &paVal) : CIEC_ANY_ELEMENTARY(), variant(paVal) {
       }
@@ -135,33 +136,44 @@ namespace forte {
         return unwrap().equals(paOther.unwrap());
       }
 
-      [[nodiscard]] static int compare(const CIEC_ANY_ELEMENTARY_VARIANT &paValue,
-                                       const CIEC_ANY_ELEMENTARY_VARIANT &paOther);
+      [[nodiscard]] static constexpr std::partial_ordering compare(const CIEC_ANY_ELEMENTARY_VARIANT &paValue,
+                                                                   const CIEC_ANY_ELEMENTARY_VARIANT &paOther) {
+        return std::visit(
+            []<typename T, typename U>(T &&value, U &&other) -> std::partial_ordering {
+              using TT = std::decay_t<T>;
+              using UU = std::decay_t<U>;
+              using commonType =
+                  std::conditional_t<std::is_same_v<TT, UU>, TT, typename mpl::get_castable_type<TT, UU>::type>;
+              if constexpr (!std::is_same_v<commonType, mpl::NullType>) {
+                if constexpr (std::is_same_v<TT, commonType> && std::is_same_v<UU, commonType>) {
+                  return std::forward<T>(value).compare(std::forward<U>(other));
+                } else if constexpr (std::is_same_v<TT, commonType>) {
+                  return std::forward<T>(value).compare(commonType(std::forward<U>(other)));
+                } else if constexpr (std::is_same_v<UU, commonType>) {
+                  return commonType(std::forward<T>(value)).compare(std::forward<U>(other));
+                } else {
+                  return commonType(std::forward<T>(value)).compare(commonType(std::forward<U>(other)));
+                }
+              } else {
+                return std::partial_ordering::unordered;
+              }
+            },
+            static_cast<const variant &>(paValue), static_cast<const variant &>(paOther));
+      }
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        return unwrap().compare(paOther.unwrap());
+      }
+
+      constexpr std::partial_ordering operator<=>(const CIEC_ANY_ELEMENTARY_VARIANT &paOther) const {
+        return compare(*this, paOther);
+      }
+
+      friend constexpr bool operator==(const CIEC_ANY_ELEMENTARY_VARIANT &paValue,
+                                       const CIEC_ANY_ELEMENTARY_VARIANT &paOther) {
+        return CIEC_ANY_ELEMENTARY_VARIANT::compare(paValue, paOther) == std::partial_ordering::equivalent;
+      }
   };
-
-  inline bool operator==(const CIEC_ANY_ELEMENTARY_VARIANT &paValue, const CIEC_ANY_ELEMENTARY_VARIANT &paOther) {
-    return CIEC_ANY_ELEMENTARY_VARIANT::compare(paValue, paOther) == 0;
-  }
-
-  inline bool operator!=(const CIEC_ANY_ELEMENTARY_VARIANT &paValue, const CIEC_ANY_ELEMENTARY_VARIANT &paOther) {
-    return CIEC_ANY_ELEMENTARY_VARIANT::compare(paValue, paOther) != 0;
-  }
-
-  inline bool operator<(const CIEC_ANY_ELEMENTARY_VARIANT &paValue, const CIEC_ANY_ELEMENTARY_VARIANT &paOther) {
-    return CIEC_ANY_ELEMENTARY_VARIANT::compare(paValue, paOther) < 0;
-  }
-
-  inline bool operator<=(const CIEC_ANY_ELEMENTARY_VARIANT &paValue, const CIEC_ANY_ELEMENTARY_VARIANT &paOther) {
-    return CIEC_ANY_ELEMENTARY_VARIANT::compare(paValue, paOther) <= 0;
-  }
-
-  inline bool operator>(const CIEC_ANY_ELEMENTARY_VARIANT &paValue, const CIEC_ANY_ELEMENTARY_VARIANT &paOther) {
-    return CIEC_ANY_ELEMENTARY_VARIANT::compare(paValue, paOther) > 0;
-  }
-
-  inline bool operator>=(const CIEC_ANY_ELEMENTARY_VARIANT &paValue, const CIEC_ANY_ELEMENTARY_VARIANT &paOther) {
-    return CIEC_ANY_ELEMENTARY_VARIANT::compare(paValue, paOther) >= 0;
-  }
 
   static_assert(std::is_copy_constructible_v<CIEC_ANY_ELEMENTARY_VARIANT>);
   static_assert(std::is_move_constructible_v<CIEC_ANY_ELEMENTARY_VARIANT>);

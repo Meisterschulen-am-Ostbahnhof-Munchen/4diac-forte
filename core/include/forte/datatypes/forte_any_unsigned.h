@@ -32,6 +32,26 @@ namespace forte {
         setSignedValue(paVal);
       }
 
+      constexpr std::strong_ordering compare(const CIEC_ANY_UNSIGNED &paOther) const {
+        return getUnsignedValue() <=> paOther.getUnsignedValue();
+      }
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == getDataTypeID()) {
+          return compare(static_cast<const CIEC_ANY_UNSIGNED &>(paOther));
+        }
+        return std::partial_ordering::unordered;
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_ANY_UNSIGNED &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_ANY_UNSIGNED &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
+      }
+
       constexpr ~CIEC_ANY_UNSIGNED() override = default;
   };
 

@@ -31,8 +31,10 @@
 #include "forte/datatypes/forte_any_int.h"
 #include "forte/datatypes/forte_char.h"
 #include "forte/util/devlog.h"
+#include <compare>
 #include <string>
-#include <stdlib.h>
+#include <string_view>
+#include <cstdlib>
 
 namespace forte {
   /*!\ingroup COREDTS CIEC_STRING represents the string data type according to IEC 61131.
@@ -45,73 +47,25 @@ namespace forte {
         return paLeft.getStorage() == paRight.getStorage();
       }
 
-      friend bool operator!=(const CIEC_STRING &paLeft, const CIEC_STRING &paRight) {
-        return !(paLeft == paRight);
-      }
-
-      friend bool operator>(const CIEC_STRING &paLeft, const CIEC_STRING &paRight) {
-        return paLeft.getStorage() > paRight.getStorage();
-      }
-
-      friend bool operator<(const CIEC_STRING &paLeft, const CIEC_STRING &paRight) {
-        return paLeft.getStorage() < paRight.getStorage();
-      }
-
-      friend bool operator>=(const CIEC_STRING &paLeft, const CIEC_STRING &paRight) {
-        return paLeft.getStorage() >= paRight.getStorage();
-      }
-
-      friend bool operator<=(const CIEC_STRING &paLeft, const CIEC_STRING &paRight) {
-        return paLeft.getStorage() <= paRight.getStorage();
+      friend std::strong_ordering operator<=>(const CIEC_STRING &paLeft, const CIEC_STRING &paRight) {
+        return paLeft.getStorage() <=> paRight.getStorage();
       }
 
       // CIEC_STRING to std::string and vice versa comparison operators
-      friend bool operator==(const std::string &paLeft, const CIEC_STRING &paRight) {
+      friend bool operator==(std::string_view paLeft, const CIEC_STRING &paRight) {
         return paLeft == paRight.getStorage();
       }
 
-      friend bool operator!=(const std::string &paLeft, const CIEC_STRING &paRight) {
-        return !(paLeft == paRight);
+      friend std::strong_ordering operator<=>(std::string_view paLeft, const CIEC_STRING &paRight) {
+        return paLeft <=> paRight.getStorage();
       }
 
-      friend bool operator>(const std::string &paLeft, const CIEC_STRING &paRight) {
-        return paLeft > paRight.getStorage();
-      }
-
-      friend bool operator<(const std::string &paLeft, const CIEC_STRING &paRight) {
-        return paLeft < paRight.getStorage();
-      }
-
-      friend bool operator>=(const std::string &paLeft, const CIEC_STRING &paRight) {
-        return paLeft >= paRight.getStorage();
-      }
-
-      friend bool operator<=(const std::string &paLeft, const CIEC_STRING &paRight) {
-        return paLeft <= paRight.getStorage();
-      }
-
-      friend bool operator==(const CIEC_STRING &paLeft, const std::string &paRight) {
+      friend bool operator==(const CIEC_STRING &paLeft, std::string_view paRight) {
         return paLeft.getStorage() == paRight;
       }
 
-      friend bool operator!=(const CIEC_STRING &paLeft, const std::string &paRight) {
-        return !(paLeft == paRight);
-      }
-
-      friend bool operator>(const CIEC_STRING &paLeft, const std::string &paRight) {
-        return paLeft.getStorage() > paRight;
-      }
-
-      friend bool operator<(const CIEC_STRING &paLeft, const std::string &paRight) {
-        return paLeft.getStorage() < paRight;
-      }
-
-      friend bool operator>=(const CIEC_STRING &paLeft, const std::string &paRight) {
-        return paLeft.getStorage() >= paRight;
-      }
-
-      friend bool operator<=(const CIEC_STRING &paLeft, const std::string &paRight) {
-        return paLeft.getStorage() <= paRight;
+      friend std::strong_ordering operator<=>(const CIEC_STRING &paLeft, std::string_view paRight) {
+        return paLeft.getStorage() <=> paRight;
       }
 
     public:
@@ -201,7 +155,16 @@ namespace forte {
 
       virtual void append(const std::string_view paValue);
 
-      int compare(const CIEC_STRING &paValue) const;
+      using CIEC_ANY::compare;
+
+      std::strong_ordering compare(const CIEC_STRING &paValue) const;
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == e_STRING) {
+          return compare(static_cast<const CIEC_STRING &>(paOther));
+        }
+        return std::partial_ordering::unordered;
+      }
 
       [[deprecated("Don't use this anymore, use c_str() instead")]]
       virtual char *getValue() override {

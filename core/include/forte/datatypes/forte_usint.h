@@ -79,9 +79,24 @@ namespace forte {
       constexpr EDataTypeID getDataTypeID() const override {
         return e_USINT;
       }
+
+      using CIEC_ANY_UNSIGNED::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_USINT &paOther) const {
+        return static_cast<TValueType>(*this) <=> static_cast<TValueType>(paOther);
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_USINT &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_USINT &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
+      }
   };
 
-  consteval inline CIEC_USINT operator""_USINT(unsigned long long int paValue) {
+  constexpr CIEC_USINT operator""_USINT(unsigned long long int paValue) {
     return CIEC_USINT(static_cast<CIEC_USINT::TValueType>(paValue));
   }
 

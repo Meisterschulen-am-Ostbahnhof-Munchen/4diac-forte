@@ -57,7 +57,6 @@ namespace forte {
        * This is semantically equivalent to the original setValue() logic for these
        * numeric types, as they did not implement additional range or overflow checks.
        */
-
       constexpr CIEC_LREAL(const CIEC_LREAL &paValue) : CIEC_ANY_REAL() {
         setValueSimple(paValue);
       }
@@ -180,7 +179,29 @@ namespace forte {
        */
       void toString(std::string &paTargetBuf) const override;
 
-      [[nodiscard]] bool equals(const CIEC_ANY &paOther) const override {
+      constexpr std::partial_ordering compare(const CIEC_ANY_REAL &paOther) const override {
+        if (paOther.getDataTypeID() == e_LREAL) {
+          return getTDFLOAT() <=> static_cast<const CIEC_LREAL &>(paOther).getTDFLOAT();
+        }
+        return std::partial_ordering::unordered;
+      }
+
+      using CIEC_ANY_REAL::compare;
+
+      constexpr std::partial_ordering compare(const CIEC_LREAL &paOther) const {
+        return getTDFLOAT() <=> paOther.getTDFLOAT();
+      }
+
+      constexpr std::partial_ordering operator<=>(const CIEC_LREAL &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_LREAL &paOther) const {
+
+        return compare(paOther) == std::partial_ordering::equivalent;
+      }
+
+      [[nodiscard]] constexpr bool equals(const CIEC_ANY &paOther) const override {
         if (paOther.getDataTypeID() == e_LREAL) {
           return getTDFLOAT() == static_cast<const CIEC_LREAL &>(paOther).getTDFLOAT();
         }
@@ -194,11 +215,11 @@ namespace forte {
       static void castLRealData(const CIEC_LREAL &paSrcValue, CIEC_ANY &paDestValue);
   };
 
-  consteval inline CIEC_LREAL operator""_LREAL(unsigned long long int paValue) {
+  constexpr CIEC_LREAL operator""_LREAL(unsigned long long int paValue) {
     return CIEC_LREAL(static_cast<CIEC_LREAL::TValueType>(paValue));
   }
 
-  consteval inline CIEC_LREAL operator""_LREAL(long double paValue) {
+  constexpr CIEC_LREAL operator""_LREAL(long double paValue) {
     return CIEC_LREAL(static_cast<CIEC_LREAL::TValueType>(paValue));
   }
 

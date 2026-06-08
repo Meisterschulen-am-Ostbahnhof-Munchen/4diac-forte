@@ -27,6 +27,27 @@ namespace forte {
     public:
       constexpr ~CIEC_ANY_REAL() override = default;
 
+      virtual constexpr std::partial_ordering compare(const CIEC_ANY_REAL &paOther) const {
+        (void) paOther;
+        return std::partial_ordering::unordered;
+      }
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == getDataTypeID()) {
+          return compare(static_cast<const CIEC_ANY_REAL &>(paOther));
+        }
+        return std::partial_ordering::unordered;
+      }
+
+      constexpr std::partial_ordering operator<=>(const CIEC_ANY_REAL &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_ANY_REAL &paOther) const {
+
+        return compare(paOther) == std::partial_ordering::equivalent;
+      }
+
     protected:
       constexpr CIEC_ANY_REAL() = default;
   };

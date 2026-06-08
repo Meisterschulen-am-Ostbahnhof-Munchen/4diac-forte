@@ -36,7 +36,7 @@ namespace forte {
       using TIecAnyDurationVariantType::variant;
       using TIecAnyDurationVariantType::operator=;
       template<class>
-      static inline constexpr bool always_false_v = false;
+      static constexpr bool always_false_v = false;
 
       CIEC_ANY_DURATION_VARIANT(const CIEC_ANY_DURATION_VARIANT &paVal) : CIEC_ANY_DURATION(), variant(paVal) {
       }

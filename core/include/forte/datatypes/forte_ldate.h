@@ -73,6 +73,21 @@ namespace forte {
         return e_LDATE;
       }
 
+      using CIEC_ANY_DATE::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_LDATE &paOther) const {
+        return static_cast<TForteUInt64>(*this) <=> static_cast<TForteUInt64>(paOther);
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_LDATE &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_LDATE &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
+      }
+
       /*! \brief Converts string value to data type value
        *
        *   This command implements a conversion function from IEC 61131
@@ -94,7 +109,7 @@ namespace forte {
       void toString(std::string &paTargetBuf) const override;
   };
 
-  consteval inline CIEC_LDATE operator""_LDATE(unsigned long long int paValue) {
+  constexpr CIEC_LDATE operator""_LDATE(unsigned long long int paValue) {
     return CIEC_LDATE(static_cast<CIEC_LDATE::TValueType>(paValue));
   }
 

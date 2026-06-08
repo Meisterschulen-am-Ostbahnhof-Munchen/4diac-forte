@@ -69,14 +69,14 @@ namespace forte {
       case e_DWORD: operator=(CIEC_DWORD(0)); return true;
       case e_LWORD: operator=(CIEC_LWORD(0)); return true;
       case e_DATE: operator=(CIEC_DATE(0)); return true;
-      case e_TIME_OF_DAY: operator=(CIEC_TIME_OF_DAY(0)); return true;
-      case e_DATE_AND_TIME: operator=(CIEC_DATE_AND_TIME(0)); return true;
+      case e_TIME_OF_DAY: operator=(0_TIME_OF_DAY); return true;
+      case e_DATE_AND_TIME: operator=(0_DATE_AND_TIME); return true;
       case e_TIME: operator=(CIEC_TIME(0)); return true;
       case e_CHAR: operator=(CIEC_CHAR(0)); return true;
       case e_WCHAR: operator=(CIEC_WCHAR(0)); return true;
-      case e_LDATE: operator=(CIEC_LDATE(0)); return true;
-      case e_LTIME_OF_DAY: operator=(CIEC_LTIME_OF_DAY(0)); return true;
-      case e_LDATE_AND_TIME: operator=(CIEC_LDATE_AND_TIME(0)); return true;
+      case e_LDATE: operator=(0_LDATE); return true;
+      case e_LTIME_OF_DAY: operator=(0_LTIME_OF_DAY); return true;
+      case e_LDATE_AND_TIME: operator=(0_LDATE_AND_TIME); return true;
       case e_LTIME: operator=(CIEC_LTIME(0)); return true;
       case e_REAL: operator=(CIEC_REAL(0.0f)); return true;
       case e_LREAL: operator=(CIEC_LREAL(0.0)); return true;
@@ -148,35 +148,5 @@ namespace forte {
         value.toString(paTargetBuf);
         break;
     }
-  }
-
-  int CIEC_ANY_ELEMENTARY_VARIANT::compare(const CIEC_ANY_ELEMENTARY_VARIANT &paValue,
-                                           const CIEC_ANY_ELEMENTARY_VARIANT &paOther) {
-    return std::visit(
-        [](auto &&value, auto &&other) -> int {
-          using T = std::decay_t<decltype(value)>;
-          using U = std::decay_t<decltype(other)>;
-          using commonType = std::conditional_t<std::is_same_v<T, U>, T, typename mpl::get_castable_type<T, U>::type>;
-          if constexpr (std::is_base_of_v<CIEC_ANY_STRING, commonType>) {
-            if constexpr (std::is_same_v<T, U> && std::is_same_v<T, CIEC_STRING>) {
-              return static_cast<CIEC_STRING>(value).compare(static_cast<CIEC_STRING>(other));
-            } else if constexpr (std::is_same_v<T, U> && std::is_same_v<T, CIEC_WSTRING>) {
-              return strcmp(static_cast<commonType>(value).getValue(), static_cast<commonType>(other).getValue());
-            } else {
-              DEVLOG_ERROR("Comparing incompatible types %s and %s\n", value.getTypeNameID().data(),
-                           other.getTypeNameID().data());
-              return -1;
-            }
-          } else if constexpr (!std::is_same_v<commonType, mpl::NullType>) {
-            auto primitiveValue = static_cast<typename commonType::TValueType>(static_cast<commonType>(value));
-            auto primitiveOther = static_cast<typename commonType::TValueType>(static_cast<commonType>(other));
-            return (primitiveValue > primitiveOther) - (primitiveValue < primitiveOther);
-          } else {
-            DEVLOG_ERROR("Comparing incompatible types %s and %s\n", value.getTypeNameID().data(),
-                         other.getTypeNameID().data());
-            return -1;
-          }
-        },
-        static_cast<const variant &>(paValue), static_cast<const variant &>(paOther));
   }
 } // namespace forte

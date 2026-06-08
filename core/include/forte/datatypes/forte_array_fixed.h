@@ -50,28 +50,32 @@ namespace forte {
       /**
        * @brief Default constructor
        */
-      CIEC_ARRAY_FIXED() = default;
+      constexpr CIEC_ARRAY_FIXED() = default;
 
       /**
        * @brief Construct an array from an initializer list
        * @param init The initializer list
        */
-      CIEC_ARRAY_FIXED(std::initializer_list<T> init) {
-        std::copy_n(init.begin(), std::min(init.size(), cmSize), data.begin());
+      constexpr CIEC_ARRAY_FIXED(std::initializer_list<T> init) {
+        size_t count = std::min(init.size(), cmSize);
+        auto it = init.begin();
+        for (size_t i = 0; i < count; ++i) {
+          data[i] = *it++;
+        }
       }
 
       /**
        * @brief Copy constructor
        * @param paSource The original array
        */
-      CIEC_ARRAY_FIXED(const CIEC_ARRAY_FIXED &paSource) : data(paSource.data) {
+      constexpr CIEC_ARRAY_FIXED(const CIEC_ARRAY_FIXED &paSource) : data(paSource.data) {
       }
 
       /**
        * @brief Move constructor
        * @param paSource The original array
        */
-      CIEC_ARRAY_FIXED(CIEC_ARRAY_FIXED &&paSource) : data(std::move(paSource.data)) {
+      constexpr CIEC_ARRAY_FIXED(CIEC_ARRAY_FIXED &&paSource) : data(std::move(paSource.data)) {
       }
 
       /**
@@ -79,7 +83,7 @@ namespace forte {
        * @tparam U The original element type
        * @param paSource The original array
        */
-      CIEC_ARRAY_FIXED(const CIEC_ARRAY &paSource) {
+      explicit constexpr CIEC_ARRAY_FIXED(const CIEC_ARRAY &paSource) noexcept {
         assignDynamic(paSource, paSource.getLowerBound(), paSource.getUpperBound());
       }
 
@@ -89,7 +93,7 @@ namespace forte {
        * @param paSource The original array
        */
       template<typename U>
-      CIEC_ARRAY_FIXED(const CIEC_ARRAY_COMMON<U> &paSource) {
+      explicit constexpr CIEC_ARRAY_FIXED(const CIEC_ARRAY_COMMON<U> &paSource) {
         assignDynamic(paSource, paSource.getLowerBound(), paSource.getUpperBound());
       }
 
@@ -99,7 +103,7 @@ namespace forte {
        * @param paSource The original array
        */
       template<typename U, std::enable_if_t<std::is_assignable_v<T &, const U &>, bool> = true>
-      CIEC_ARRAY_FIXED(const CIEC_ARRAY_VARIABLE<U> &paSource) {
+      explicit constexpr CIEC_ARRAY_FIXED(const CIEC_ARRAY_VARIABLE<U> &paSource) {
         assign(paSource, paSource.getLowerBound(), paSource.getUpperBound());
       }
 
@@ -114,7 +118,7 @@ namespace forte {
                intmax_t sourceLowerBound,
                intmax_t sourceUpperBound,
                std::enable_if_t<std::is_assignable_v<T &, const U &>, bool> = true>
-      CIEC_ARRAY_FIXED(const CIEC_ARRAY_FIXED<U, sourceLowerBound, sourceUpperBound> &paSource) {
+      explicit constexpr CIEC_ARRAY_FIXED(const CIEC_ARRAY_FIXED<U, sourceLowerBound, sourceUpperBound> &paSource) {
         assign(paSource, sourceLowerBound, sourceUpperBound);
       }
 
@@ -129,7 +133,7 @@ namespace forte {
        * @param paSource The original array
        * @return The assigned array
        */
-      CIEC_ARRAY_FIXED &operator=(const CIEC_ARRAY_FIXED &paSource) {
+      constexpr CIEC_ARRAY_FIXED &operator=(const CIEC_ARRAY_FIXED &paSource) {
         data = paSource.data;
         return *this;
       }
@@ -139,7 +143,7 @@ namespace forte {
        * @param paSource The original array
        * @return The assigned array
        */
-      CIEC_ARRAY_FIXED &operator=(CIEC_ARRAY_FIXED &&paSource) {
+      constexpr CIEC_ARRAY_FIXED &operator=(CIEC_ARRAY_FIXED &&paSource) {
         data = std::move(paSource.data);
         return *this;
       }
@@ -151,7 +155,7 @@ namespace forte {
        * @return The assigned array
        */
       template<typename U, std::enable_if_t<std::is_assignable_v<T &, const U &>, bool> = true>
-      CIEC_ARRAY_FIXED &operator=(const CIEC_ARRAY_VARIABLE<U> &paSource) {
+      constexpr CIEC_ARRAY_FIXED &operator=(const CIEC_ARRAY_VARIABLE<U> &paSource) noexcept {
         assign(paSource, paSource.getLowerBound(), paSource.getUpperBound());
         return *this;
       }
@@ -168,7 +172,7 @@ namespace forte {
                intmax_t sourceLowerBound,
                intmax_t sourceUpperBound,
                std::enable_if_t<std::is_assignable_v<T &, const U &>, bool> = true>
-      CIEC_ARRAY_FIXED &operator=(const CIEC_ARRAY_FIXED<U, sourceLowerBound, sourceUpperBound> &paSource) {
+      constexpr CIEC_ARRAY_FIXED &operator=(const CIEC_ARRAY_FIXED<U, sourceLowerBound, sourceUpperBound> &paSource) {
         assign(paSource, sourceLowerBound, sourceUpperBound);
         return *this;
       }
@@ -233,7 +237,7 @@ namespace forte {
 
       // PLC-like systems always want range checks
       [[nodiscard]] constexpr reference operator[](intmax_t index) override {
-        return data[getDataArrayIndex(index)];
+        return data[staticGetInternalDataArrayIndex(index)];
       }
 
       [[nodiscard]] constexpr const_reference at(intmax_t index) const override {
@@ -243,7 +247,7 @@ namespace forte {
 
       // PLC-like systems always want range checks
       [[nodiscard]] constexpr const_reference operator[](intmax_t index) const override {
-        return data[getDataArrayIndex(index)];
+        return data[staticGetInternalDataArrayIndex(index)];
       }
 
       [[nodiscard]] constexpr iterator begin() {
@@ -270,7 +274,7 @@ namespace forte {
         return data.cend();
       }
 
-      [[nodiscard]] bool hasVariableBounds() const override {
+      [[nodiscard]] constexpr bool hasVariableBounds() const override {
         return false;
       };
 
@@ -282,12 +286,20 @@ namespace forte {
         DEVLOG_ERROR("Cannot set bounds of fixed array\n");
       }
 
-      [[nodiscard]] CIEC_ANY::EDataTypeID getElementDataTypeID() const override {
-        return data[0].getDataTypeID();
+      [[nodiscard]] constexpr CIEC_ANY::EDataTypeID getElementDataTypeID() const override {
+        if constexpr (cmSize > 0) {
+          return data[0].getDataTypeID();
+        } else {
+          return CIEC_ANY::e_ANY;
+        }
       }
 
-      [[nodiscard]] StringId getElementTypeNameID() const override {
-        return data[0].getTypeNameID();
+      [[nodiscard]] constexpr StringId getElementTypeNameID() const override {
+        if constexpr (cmSize > 0) {
+          return data[0].getTypeNameID();
+        } else {
+          return StringId();
+        }
       }
 
       [[nodiscard]] int fromString(const char *paValue) override {
@@ -324,11 +336,11 @@ namespace forte {
         return nRetVal;
       }
 
-      ~CIEC_ARRAY_FIXED() override = default;
+      constexpr ~CIEC_ARRAY_FIXED() override = default;
 
     private:
       template<typename U>
-      inline void assign(const U &paArray, intmax_t sourceLowerBound, intmax_t sourceUpperBound) {
+      constexpr void assign(const U &paArray, intmax_t sourceLowerBound, intmax_t sourceUpperBound) {
         intmax_t begin = std::max(lowerBound, sourceLowerBound);
         intmax_t end = std::min(upperBound, sourceUpperBound);
         for (intmax_t i = begin; i <= end; ++i) {
@@ -337,7 +349,7 @@ namespace forte {
       }
 
       template<typename U>
-      inline void assignDynamic(const U &paArray, intmax_t sourceLowerBound, intmax_t sourceUpperBound) {
+      constexpr void assignDynamic(const U &paArray, intmax_t sourceLowerBound, intmax_t sourceUpperBound) {
         if (paArray.size()) { // check if initialized
           intmax_t begin = std::max(lowerBound, sourceLowerBound);
           intmax_t end = std::min(upperBound, sourceUpperBound);
@@ -347,7 +359,7 @@ namespace forte {
         }
       }
 
-      [[nodiscard]] constexpr size_t getDataArrayIndex(intmax_t paSTIndex) const {
+      [[nodiscard]] static constexpr size_t staticGetInternalDataArrayIndex(intmax_t paSTIndex) {
         return static_cast<size_t>(paSTIndex - lowerBound);
       }
 
@@ -403,7 +415,7 @@ namespace forte {
         }
       }
 
-      std::array<T, cmSize> data;
+      std::array<T, cmSize> data{};
   };
 
   static_assert(std::is_copy_constructible_v<CIEC_ARRAY_FIXED<CIEC_UINT, 0, 0>>);

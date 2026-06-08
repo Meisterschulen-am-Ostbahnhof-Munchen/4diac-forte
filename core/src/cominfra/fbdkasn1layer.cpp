@@ -319,7 +319,7 @@ namespace forte::com_infra {
       case CIEC_ANY::e_ANY: serializeTag(paBytes, paCIECData.unwrap()); break;
       case CIEC_ANY::e_STRUCT:
         // get ASN1-tag from implementing datatype for STRUCT-datatypes
-        paBytes[0] = ((CIEC_STRUCT &) paCIECData).getASN1StructType();
+        paBytes[0] = static_cast<const CIEC_STRUCT &>(paCIECData).getASN1StructType();
         break;
 #ifdef FORTE_SUPPORT_CUSTOM_SERIALIZABLE_DATATYPES
       case CIEC_ANY::e_External: paBytes[0] = paCIECData.getTag(); break;
@@ -341,7 +341,7 @@ namespace forte::com_infra {
       switch (eDataType) {
         case CIEC_ANY::e_ANY: nRetVal = serializeValue(paBytes, paStreamSize, paCIECData.unwrap()); break;
         case CIEC_ANY::e_BOOL:
-          if (!((CIEC_BOOL &) paCIECData).operator bool()) {
+          if (!static_cast<const CIEC_BOOL &>(paCIECData)) {
             // data of bool is encoded in the tag; if CIEC_BOOL == false => Tag must be e_APPLICATION + e_PRIMITIVE
             paBytes[-1] = static_cast<TForteByte>(paBytes[-1] - static_cast<TForteByte>(e_BOOL_TAG));
           }
@@ -452,7 +452,7 @@ namespace forte::com_infra {
       // bool arrays are special
       nRetVal = 2; // array len
       paStreamSize -= nRetVal;
-      for (TForteUInt16 i = 0; i < nArraySize; i++) { // serialize elements
+      for (size_t i = 0; i < nArraySize; i++) { // serialize elements
         int nSerSize = serializeDataPoint(paBytes, paStreamSize, paArray[i]);
         if (0 < nSerSize) {
           nRetVal += nSerSize;
@@ -470,7 +470,7 @@ namespace forte::com_infra {
       paStreamSize -= nRetVal;
 
       ++paBytes;
-      for (TForteUInt16 i = 0; i < nArraySize; i++) { // serialize elements
+      for (size_t i = 0; i < nArraySize; i++) { // serialize elements
         int nSerSize = serializeValue(paBytes, paStreamSize, paArray[i]);
         if (-1 == nSerSize) {
           nRetVal = -1;
@@ -620,7 +620,7 @@ namespace forte::com_infra {
     int nValueSize = csmDataTags[paIECData.getDataTypeID()][1] - 1;
 
     if (paStreamSize >= nValueSize) {
-      // setting mAnyData to 0
+      // setting mLargestUInt to 0
       paIECData.setLargestUInt(0);
 
       // we only need to check for SINT, INT, and DINT as LINT will fill all bytes
@@ -712,7 +712,7 @@ namespace forte::com_infra {
           CIEC_ANY *poBufVal = nullptr;
           size_t unArraySize = paArray.size();
 
-          for (TForteUInt16 i = 0; i < nSize; ++i) {
+          for (size_t i = 0; i < nSize; ++i) {
             if (i < unArraySize) {
               nValueLen = deserializeValue(paBytes, paStreamSize, paArray[i]);
             } else {
@@ -751,7 +751,7 @@ namespace forte::com_infra {
     size_t unArraySize = paArray.size();
     int nValueLen;
 
-    for (TForteUInt16 i = 0; i < paDecodedArraySize; ++i) {
+    for (size_t i = 0; i < paDecodedArraySize; ++i) {
       if (i < unArraySize) {
         nValueLen = deserializeDataPoint(paBytes, paStreamSize, paArray[i]);
       } else {
@@ -797,20 +797,26 @@ namespace forte::com_infra {
 
     switch (paCIECData.getDataTypeID()) {
       case CIEC_ANY::e_ANY: unRetVal = getRequiredSerializationSize(paCIECData.unwrap()); break;
-      case CIEC_ANY::e_STRING: unRetVal += ((CIEC_STRING &) paCIECData).length() + 3; break;
-      case CIEC_ANY::e_WSTRING: unRetVal += ((CIEC_WSTRING &) paCIECData).toUTF16(nullptr, 0) + 3; break;
-      case CIEC_ANY::e_ARRAY:
+      case CIEC_ANY::e_STRING: unRetVal += static_cast<const CIEC_STRING &>(paCIECData).length() + 3; break;
+      case CIEC_ANY::e_WSTRING:
+        unRetVal += static_cast<const CIEC_WSTRING &>(paCIECData).toUTF16(nullptr, 0) + 3;
+        break;
+      case CIEC_ANY::e_ARRAY: {
         unRetVal += 3;
-        if (((CIEC_ARRAY &) paCIECData).getElementDataTypeID() == CIEC_ANY::e_BOOL) {
-          unRetVal += ((CIEC_ARRAY &) paCIECData).size();
+        const auto &array = static_cast<const CIEC_ARRAY &>(paCIECData);
+        const size_t arraySize = array.size();
+        if (array.getElementDataTypeID() == CIEC_ANY::e_BOOL) {
+          unRetVal += arraySize;
         } else {
-          for (TForteUInt16 j = 0; j < ((CIEC_ARRAY &) paCIECData).size(); ++j) {
-            unRetVal += getRequiredSerializationSize((((CIEC_ARRAY &) paCIECData)[j]));
+          for (size_t j = 0; j < arraySize; ++j) {
+            unRetVal += getRequiredSerializationSize(array[j]);
           }
           // First element with tag, subsequent ones without - adjust
-          unRetVal -= ((CIEC_ARRAY &) paCIECData).size() - 1;
+          if (arraySize > 1) {
+            unRetVal -= arraySize - 1;
+          }
         }
-        break;
+      } break;
 #ifdef FORTE_SUPPORT_CUSTOM_SERIALIZABLE_DATATYPES
       case CIEC_ANY::e_External: unRetVal += paCIECData.getRequiredSerializationSize(); break;
 #endif /* FORTE_SUPPORT_CUSTOM_SERIALIZABLE_DATATYPES */

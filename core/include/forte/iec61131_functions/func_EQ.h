@@ -31,12 +31,12 @@
 
 namespace forte {
   template<typename T, typename U, typename... Args>
-  CIEC_BOOL func_EQ(const T &paIn1, const U &paIn2, const Args &...args) {
+  constexpr CIEC_BOOL func_EQ(const T &paIn1, const U &paIn2, const Args &...args) {
     return CIEC_BOOL(func_EQ(paIn1, paIn2) && func_EQ(paIn2, args...));
   }
 
   template<typename T, typename U>
-  CIEC_BOOL func_EQ(const T &paIN1, const U &paIN2) {
+  constexpr CIEC_BOOL func_EQ(const T &paIN1, const U &paIN2) {
     if constexpr (forte::mpl::has_equality_v<T, U>) {
       return CIEC_BOOL(paIN1 == paIN2);
     } else if constexpr (forte::mpl::are_of_subtype_v<CIEC_ANY_BIT, T, U>) { // ANY_BITs can be also partial
@@ -54,7 +54,7 @@ namespace forte {
   }
 
   template<typename T>
-  CIEC_BOOL func_EQ(const T &paIN1, const T &paIN2) {
+  constexpr CIEC_BOOL func_EQ(const T &paIN1, const T &paIN2) {
     if constexpr (forte::mpl::has_equality_v<T>) {
       return CIEC_BOOL(paIN1 == paIN2);
     } else {

@@ -27,6 +27,17 @@ namespace forte {
     public:
       typedef TForteUInt64 TValueType;
 
+      constexpr std::strong_ordering compare(const CIEC_ANY_DATE &paOther) const {
+        return getTUINT64() <=> paOther.getTUINT64();
+      }
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == getDataTypeID()) {
+          return compare(static_cast<const CIEC_ANY_DATE &>(paOther));
+        }
+        return std::partial_ordering::unordered;
+      }
+
       constexpr ~CIEC_ANY_DATE() override = default;
 
       void reset() override {
@@ -54,34 +65,16 @@ namespace forte {
        */
       unsigned int getMilliSeconds() const;
 
-      template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DATE, T>, int> = 0>
-      friend bool operator==(const T &paLeft, const T &paRight) {
+      template<typename T>
+        requires std::is_base_of_v<CIEC_ANY_DATE, T>
+      friend constexpr bool operator==(const T &paLeft, const T &paRight) {
         return static_cast<typename T::TValueType>(paLeft) == static_cast<typename T::TValueType>(paRight);
       }
 
-      template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DATE, T>, int> = 0>
-      friend bool operator!=(const T &paLeft, const T &paRight) {
-        return !(paLeft == paRight);
-      }
-
-      template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DATE, T>, int> = 0>
-      friend bool operator<(const T &paLeft, const T &paRight) {
-        return static_cast<typename T::TValueType>(paLeft) < static_cast<typename T::TValueType>(paRight);
-      }
-
-      template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DATE, T>, int> = 0>
-      friend bool operator>(const T &paLeft, const T &paRight) {
-        return static_cast<typename T::TValueType>(paLeft) > static_cast<typename T::TValueType>(paRight);
-      }
-
-      template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DATE, T>, int> = 0>
-      friend bool operator<=(const T &paLeft, const T &paRight) {
-        return paLeft == paRight || paLeft < paRight;
-      }
-
-      template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DATE, T>, int> = 0>
-      friend bool operator>=(const T &paLeft, const T &paRight) {
-        return paLeft == paRight || paLeft > paRight;
+      template<typename T>
+        requires std::is_base_of_v<CIEC_ANY_DATE, T>
+      friend constexpr std::strong_ordering operator<=>(const T &paLeft, const T &paRight) {
+        return static_cast<typename T::TValueType>(paLeft) <=> static_cast<typename T::TValueType>(paRight);
       }
 
     protected:

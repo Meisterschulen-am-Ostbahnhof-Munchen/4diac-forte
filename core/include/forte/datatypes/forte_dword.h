@@ -107,8 +107,23 @@ namespace forte {
         return getTUINT32();
       }
 
-      constexpr EDataTypeID getDataTypeID() const override {
+      constexpr EDataTypeID getDataTypeID() const final {
         return e_DWORD;
+      }
+
+      using CIEC_ANY_BIT::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_DWORD &paOther) const {
+        return static_cast<TValueType>(*this) <=> static_cast<TValueType>(paOther);
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_DWORD &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_DWORD &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
       }
 
       /*! \brief Partial access within a CIEC_DWORD (e.g. [DWORD].partial<CIEC_BOOL>(1))
@@ -145,7 +160,7 @@ namespace forte {
       }
   };
 
-  consteval inline CIEC_DWORD operator""_DWORD(unsigned long long int paValue) {
+  constexpr CIEC_DWORD operator""_DWORD(unsigned long long int paValue) {
     return CIEC_DWORD(static_cast<CIEC_DWORD::TValueType>(paValue));
   }
 

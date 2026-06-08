@@ -58,7 +58,7 @@ class CZephyrThread : public forte::arch::CThreadBase<k_tid_t> {
     ~CZephyrThread() override;
 
     //! Set the deadline of the thread.
-    void setDeadline(const CIEC_TIME &paVal) override final;
+    void setDeadline(const CIEC_TIME &paVal) final;
 
     /*! \brief Sleep the calling thread
      *

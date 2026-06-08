@@ -78,9 +78,9 @@ namespace forte {
         nNewLength = paRequestedSize;
       }
 
-      TForteByte *newMemory = static_cast<TForteByte *>(operator new(
+      std::byte *newMemory = static_cast<std::byte *>(operator new(
           nNewLength + 5)); // the plus five are 2 bytes for length, 2 bytes for capacity and one for a backup \0
-      TForteByte *oldMemory = getGenData();
+      std::byte *oldMemory = getGenData();
       if (nullptr != oldMemory) {
         memcpy(newMemory, oldMemory, getCapacity() + 5);
         operator delete(oldMemory);

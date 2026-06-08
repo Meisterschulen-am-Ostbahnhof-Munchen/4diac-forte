@@ -13,6 +13,7 @@
 #############################################################################
 
 target_sources(forte-iec61131-3 PRIVATE
+        ComparisonHelper.h
         F_EQ_fbt.cpp
         F_GE_fbt.cpp
         F_GT_fbt.cpp

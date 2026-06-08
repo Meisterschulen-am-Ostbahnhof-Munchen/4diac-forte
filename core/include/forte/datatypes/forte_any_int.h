@@ -39,11 +39,11 @@ namespace forte {
         return e_LINT >= getDataTypeID();
       }
 
-      TLargestUIntValueType getUnsignedValue() const {
+      constexpr TLargestUIntValueType getUnsignedValue() const {
         return getLargestUInt();
       }
 
-      TLargestIntValueType getSignedValue() const {
+      constexpr TLargestIntValueType getSignedValue() const {
         return getLargestInt();
       }
 
@@ -51,8 +51,8 @@ namespace forte {
         setLargestInt(mVal);
       }
 
-      constexpr void setUnsignedValue(TLargestIntValueType mVal) {
-        setLargestInt(mVal);
+      constexpr void setUnsignedValue(TLargestUIntValueType mVal) {
+        setLargestUInt(mVal);
       }
 
       constexpr CIEC_ANY_INT() = default;

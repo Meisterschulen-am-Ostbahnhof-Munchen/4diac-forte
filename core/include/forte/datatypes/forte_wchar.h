@@ -68,13 +68,34 @@ namespace forte {
       constexpr EDataTypeID getDataTypeID() const override {
         return e_WCHAR;
       }
+
+      using CIEC_ANY::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_WCHAR &paOther) const {
+        return static_cast<TForteWChar>(*this) <=> static_cast<TForteWChar>(paOther);
+      }
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == getDataTypeID()) {
+          return compare(static_cast<const CIEC_WCHAR &>(paOther));
+        }
+        return CIEC_ANY::compare(paOther);
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_WCHAR &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_WCHAR &paOther) const {
+        return compare(paOther) == std::strong_ordering::equal;
+      }
   };
 
-  consteval inline CIEC_WCHAR operator""_WCHAR(char16_t paValue) {
+  constexpr CIEC_WCHAR operator""_WCHAR(char16_t paValue) {
     return CIEC_WCHAR(static_cast<CIEC_WCHAR::TValueType>(paValue));
   }
 
-  consteval inline CIEC_WCHAR operator""_WCHAR(unsigned long long int paValue) {
+  constexpr CIEC_WCHAR operator""_WCHAR(unsigned long long int paValue) {
     return CIEC_WCHAR(static_cast<CIEC_WCHAR::TValueType>(paValue));
   }
 

@@ -44,7 +44,6 @@ namespace forte::iec61131::selection {
       conn_K(nullptr),
       conn_OUT(*this, 0, var_OUT) {};
 
-
   void GEN_F_MUX::executeEvent(const TEventID paEIID, CEventChainExecutionThread *const paECET) {
     switch (paEIID) {
       case scmEventREQID:

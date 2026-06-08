@@ -89,6 +89,21 @@ namespace forte {
         return e_BYTE;
       }
 
+      using CIEC_ANY_BIT::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_BYTE &paOther) const {
+        return static_cast<TValueType>(*this) <=> static_cast<TValueType>(paOther);
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_BYTE &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_BYTE &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
+      }
+
       /*! \brief Partial access within a CIEC_BYTE (e.g. [BYTE].partial<CIEC_BOOL,1>())
        *
        */
@@ -123,7 +138,7 @@ namespace forte {
       }
   };
 
-  consteval inline CIEC_BYTE operator""_BYTE(unsigned long long int paValue) {
+  constexpr CIEC_BYTE operator""_BYTE(unsigned long long int paValue) {
     return CIEC_BYTE(static_cast<CIEC_BYTE::TValueType>(paValue));
   }
 
