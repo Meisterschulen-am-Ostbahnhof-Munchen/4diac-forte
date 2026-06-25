@@ -18,6 +18,8 @@
 #include "forte/datatypes/forte_time.h"
 #include "forte/arch/forte_sem.h"
 #include "forte/arch/forte_sync.h"
+#include <thread>
+#include <chrono>
 
 namespace forte::arch {
 
@@ -71,6 +73,14 @@ namespace forte::arch {
        */
       void join();
 
+      /*! \brief Check if the caller is in the same thread as the thread object.
+       *
+       *  \return true if the caller is in the same thread as the thread object.
+       */
+      virtual bool isSelf() const {
+        return false;
+      }
+
       /*! \brief Set the deadline of the thread.
        *
        *  The default behaviour is to ignore the deadline.
@@ -85,7 +95,7 @@ namespace forte::arch {
         return mDeadline;
       }
 
-      TThreadHandleType getThreadHandle() {
+      TThreadHandleType getThreadHandle() const {
         return mThreadHandle;
       }
 
@@ -205,12 +215,20 @@ namespace forte::arch {
   template<typename TThreadHandle, TThreadHandle nullHandle, typename ThreadDeletePolicy>
   void CThreadBase<TThreadHandle, nullHandle, ThreadDeletePolicy>::start() {
     util::CCriticalRegion criticalRegion(mThreadMutex);
-    if (nullHandle == mThreadHandle) {
-      mThreadHandle = createThread(mStackSize);
-      if (nullHandle == mThreadHandle) {
-        DEVLOG_ERROR("Error could not create the thread!\n");
-        mJoinSem.inc();
+    if (nullHandle != mThreadHandle) {
+      if (isAlive()) {
+        return;
       }
+      if (!isSelf()) {
+        join();
+      }
+    }
+    setAlive(true);
+    mThreadHandle = createThread(mStackSize);
+    if (nullHandle == mThreadHandle) {
+      DEVLOG_ERROR("Error could not create the thread!\n");
+      setAlive(false);
+      mJoinSem.inc();
     }
   }
 
@@ -232,9 +250,10 @@ namespace forte::arch {
 
   template<typename TThreadHandle, TThreadHandle nullHandle, typename ThreadDeletePolicy>
   void CThreadBase<TThreadHandle, nullHandle, ThreadDeletePolicy>::join() {
-    if (nullHandle != mThreadHandle) {
+    if ((nullHandle != mThreadHandle) && (!isSelf())) {
       mJoinSem.waitIndefinitely();
       mJoinSem.inc(); // allow many joins
+      std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Wait slightly to prevent UAF in detached thread epilogue
     }
   }
 
@@ -243,10 +262,8 @@ namespace forte::arch {
     // if pointer is ok
     if (nullptr != paThread) {
       TThreadHandle threadHandle = paThread->mThreadHandle;
-      paThread->setAlive(true);
       paThread->run();
       paThread->setAlive(false);
-      paThread->mThreadHandle = nullHandle;
       paThread->mJoinSem.inc();
       ThreadDeletePolicy::deleteThread(threadHandle);
     } else {

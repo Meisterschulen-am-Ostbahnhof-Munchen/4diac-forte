@@ -30,7 +30,9 @@ namespace forte {
     clear();
   }
 
-  CEventChainExecutionThread::~CEventChainExecutionThread() = default;
+  CEventChainExecutionThread::~CEventChainExecutionThread() {
+    end();
+  }
 
   void CEventChainExecutionThread::run() {
     while (isAlive()) { // thread is allowed to execute
@@ -101,7 +103,7 @@ namespace forte {
         }
         break;
       case EMGMCommandType::Kill: clear(); [[fallthrough]];
-      case EMGMCommandType::Stop: stop(); break;
+      case EMGMCommandType::Stop: end(); break;
       default: break;
     }
   }
