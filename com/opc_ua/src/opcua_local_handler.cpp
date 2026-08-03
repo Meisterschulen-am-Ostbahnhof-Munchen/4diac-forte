@@ -26,6 +26,9 @@
 
 #include <open62541/server.h>
 #include <open62541/server_config_default.h>
+#ifdef FORTE_COM_OPC_UA_WEBSOCKET
+#include <open62541/plugin/eventloop.h>
+#endif // FORTE_COM_OPC_UA_WEBSOCKET
 
 #include "forte/iec61131_functions.h"
 #include "forte/cominfra/basecommfb.h"
@@ -75,7 +78,12 @@ namespace forte::com_infra::opc_ua {
 
   COPC_UA_Local_Handler::COPC_UA_Local_Handler(CDeviceExecution &paDeviceExecution) :
       COPC_UA_HandlerAbstract(paDeviceExecution),
-      mUaServer(nullptr) {
+      mUaServer(nullptr)
+#ifdef FORTE_COM_OPC_UA_WEBSOCKET
+      ,
+      mWsConnectionManager(nullptr)
+#endif // FORTE_COM_OPC_UA_WEBSOCKET
+  {
   }
 
   COPC_UA_Local_Handler::~COPC_UA_Local_Handler() {
@@ -156,9 +164,19 @@ namespace forte::com_infra::opc_ua {
       }
       UA_Server_delete(mUaServer);
       mUaServer = nullptr;
+#ifdef FORTE_COM_OPC_UA_WEBSOCKET
+      // mWsConnectionManager was torn down as part of the EventLoop that
+      // UA_Server_delete() just freed; drop the now-dangling pointer.
+      mWsConnectionManager = nullptr;
+#endif // FORTE_COM_OPC_UA_WEBSOCKET
     } else {
       DEVLOG_ERROR("[OPC UA LOCAL]: Couldn't initialize server\n");
       UA_ServerConfig_clear(&config);
+#ifdef FORTE_COM_OPC_UA_WEBSOCKET
+      // Same as above: torn down together with the eventLoop that
+      // UA_ServerConfig_clear() just cleared.
+      mWsConnectionManager = nullptr;
+#endif // FORTE_COM_OPC_UA_WEBSOCKET
     }
     mServerStarted.inc(); // this will avoid locking startServer() for all cases where the starting of server failed
   }
@@ -196,10 +214,29 @@ namespace forte::com_infra::opc_ua {
 #endif
     paServerStrings.mHostname.append(":");
     paServerStrings.mHostname.append(std::to_string(paUAServerPort));
+
+#ifdef FORTE_COM_OPC_UA_WEBSOCKET
+    // Mirrors mHostname above: an empty hostname makes open62541 listen on
+    // all interfaces, which is the default here (no FORTE_COM_OPC_UA_CUSTOM_HOSTNAME).
+    paServerStrings.mWsHostname = std::string("opc.ws://");
+#ifdef FORTE_COM_OPC_UA_CUSTOM_HOSTNAME
+    paServerStrings.mWsHostname.append(FORTE_COM_OPC_UA_CUSTOM_HOSTNAME);
+    paServerStrings.mWsHostname.append("-"s);
+    paServerStrings.mWsHostname.append(helperBuffer);
+#endif
+    // WebSocket listens one port above the plain TCP endpoint.
+    paServerStrings.mWsHostname.append(":");
+    paServerStrings.mWsHostname.append(std::to_string(static_cast<TForteUInt16>(paUAServerPort + 1)));
+#endif // FORTE_COM_OPC_UA_WEBSOCKET
   }
 
+#ifdef FORTE_COM_OPC_UA_WEBSOCKET
+  void COPC_UA_Local_Handler::configureUAServer(UA_ServerStrings &paServerStrings,
+                                                UA_ServerConfig &paUaServerConfig) {
+#else
   void COPC_UA_Local_Handler::configureUAServer(UA_ServerStrings &paServerStrings,
                                                 UA_ServerConfig &paUaServerConfig) const {
+#endif // FORTE_COM_OPC_UA_WEBSOCKET
 #ifdef FORTE_COM_OPC_UA_MULTICAST
     forte::com_infra::opc_ua::detail::LdsMeHandler::configureServer(paUaServerConfig, paServerStrings.mMdnsServerName);
 #endif // FORTE_COM_OPC_UA_MULTICAST
@@ -208,16 +245,47 @@ namespace forte::com_infra::opc_ua {
     paUaServerConfig.serverUrls = nullptr;
     paUaServerConfig.serverUrlsSize = 0;
 
+#ifdef FORTE_COM_OPC_UA_WEBSOCKET
+    UA_String serverUrls[2];
+#else
     UA_String serverUrls[1];
+#endif // FORTE_COM_OPC_UA_WEBSOCKET
     size_t serverUrlsSize = 0;
     serverUrls[serverUrlsSize] = UA_STRING(&paServerStrings.mHostname[0]);
     serverUrlsSize++;
+#ifdef FORTE_COM_OPC_UA_WEBSOCKET
+    serverUrls[serverUrlsSize] = UA_STRING(&paServerStrings.mWsHostname[0]);
+    serverUrlsSize++;
+#endif // FORTE_COM_OPC_UA_WEBSOCKET
     UA_StatusCode retVal =
         UA_Array_copy(serverUrls, serverUrlsSize, (void **) &paUaServerConfig.serverUrls, &UA_TYPES[UA_TYPES_STRING]);
     if (retVal != UA_STATUSCODE_GOOD) {
       return;
     }
     paUaServerConfig.serverUrlsSize = serverUrlsSize;
+
+#ifdef FORTE_COM_OPC_UA_WEBSOCKET
+    // opc.ws:// support: requires open62541 built with UA_ENABLE_LWS, which
+    // provides UA_ConnectionManager_new_LWS_WebSocket and implies
+    // UA_ENABLE_WEBSOCKET_TRANSPORT (the generic server-side opc.ws://
+    // handling that looks up a UA_ConnectionManager named "websocket" in the
+    // EventLoop).
+    mWsConnectionManager = UA_ConnectionManager_new_LWS_WebSocket(UA_STRING_STATIC("websocket"));
+    if (mWsConnectionManager) {
+      UA_StatusCode wsRetVal = paUaServerConfig.eventLoop->registerEventSource(
+              paUaServerConfig.eventLoop, &mWsConnectionManager->eventSource);
+      if (wsRetVal != UA_STATUSCODE_GOOD) {
+        DEVLOG_ERROR("[OPC UA LOCAL]: Could not register the WebSocket ConnectionManager: %s\n",
+                     UA_StatusCode_name(wsRetVal));
+        mWsConnectionManager->eventSource.free(&mWsConnectionManager->eventSource);
+        mWsConnectionManager = nullptr;
+      } else {
+        paUaServerConfig.webSocketEnabled = true;
+      }
+    } else {
+      DEVLOG_ERROR("[OPC UA LOCAL]: Could not create the WebSocket ConnectionManager\n");
+    }
+#endif // FORTE_COM_OPC_UA_WEBSOCKET
 
     // delete pre-initialized values
     UA_LocalizedText_clear(&paUaServerConfig.applicationDescription.applicationName);

@@ -49,6 +49,15 @@ set(FORTE_COM_OPC_UA_SERVER_MAX_ITERATION_INTERVAL
 option(FORTE_COM_OPC_UA_MULTICAST
         "Enable multicast support for OPC UA and registering with LDS" OFF
 )
+# Enables an opc.ws:// endpoint alongside the plain opc.tcp:// one, one port
+# above it. Requires open62541 built with UA_ENABLE_LWS (libwebsockets),
+# which is not yet part of upstream open62541 as of writing; see
+# https://github.com/open62541/open62541/pull/8259 and, on top of that,
+# https://github.com/o6-automation/open62541-dev/pull/2. Until that lands,
+# building with this option requires an open62541 with those changes applied.
+option(FORTE_COM_OPC_UA_WEBSOCKET
+        "Enable an OPC UA over WebSocket (opc.ws://) server endpoint. Requires open62541 built with UA_ENABLE_LWS." OFF
+)
 set(FORTE_COM_OPC_UA_CUSTOM_HOSTNAME
         CACHE STRING
         "Custom hostname which is used for the OPC UA app name and app uri"
