@@ -1,16 +1,17 @@
 # *******************************************************************************************
 
-# Copyright (c) 2015-2016 Florian Froschermeier
-# <florian.froschermeier@tum.de>, fortiss GmbH This program and the
-# accompanying materials are made available under the terms of the Eclipse
-# Public License 2.0 which is available at
+# Copyright (c) 2015 Florian Froschermeier
+# <florian.froschermeier@tum.de>, fortiss GmbH, HR Agrartechnik GmbH This
+# program and the accompanying materials are made available under the terms
+# of the Eclipse Public License 2.0 which is available at
 # http://www.eclipse.org/legal/epl-2.0.
 #
 # SPDX-License-Identifier: EPL-2.0
 #
 # Contributors: Florian Froschermeier - initial integration of OPC Unified
 # Architecture into FORTE Stefan Profanter - refactoring and adaption to new
-# concept
+# concept Franz Höpfinger - Add optional OPC UA over WebSocket (opc.ws://)
+# server endpoint
 # ******************************************************************************************
 
 # ############################################################################
@@ -25,7 +26,27 @@ if (NOT FORTE_COM_OPC_UA)
     return()
 endif ()
 
-find_package(open62541 1.5.4 REQUIRED)
+if (FORTE_COM_OPC_UA_INCLUDE_DIR)
+    get_filename_component(FORTE_COM_OPC_UA_INCLUDE_DIR_ABS "${FORTE_COM_OPC_UA_INCLUDE_DIR}" ABSOLUTE)
+    if (NOT TARGET open62541::open62541)
+        # FORTE_COM_OPC_UA_INCLUDE_DIR points at an amalgamated open62541 build
+        # (open62541.c/.h, no compiled library yet): on ESP-IDF targets that
+        # source is compiled and linked one level up, as the outer project's
+        # own "open62541" component, so forte only ever needs the headers here
+        # to type-check against - never a real library to link.
+        add_library(open62541 INTERFACE)
+        add_library(open62541::open62541 ALIAS open62541)
+        target_include_directories(open62541 INTERFACE
+            $<BUILD_INTERFACE:${FORTE_COM_OPC_UA_INCLUDE_DIR_ABS}>
+            $<BUILD_INTERFACE:${FORTE_COM_OPC_UA_INCLUDE_DIR_ABS}/src_generated>
+            $<BUILD_INTERFACE:${FORTE_COM_OPC_UA_INCLUDE_DIR_ABS}/../open62541/include>
+            $<BUILD_INTERFACE:${FORTE_COM_OPC_UA_INCLUDE_DIR_ABS}/../open62541/plugins/include>
+        )
+        install(TARGETS open62541 EXPORT forte-export)
+    endif ()
+else ()
+    find_package(open62541 1.5.4 REQUIRED)
+endif ()
 
 set(FORTE_COM_OPC_UA_PORT
         4840
@@ -49,6 +70,105 @@ set(FORTE_COM_OPC_UA_SERVER_MAX_ITERATION_INTERVAL
 option(FORTE_COM_OPC_UA_MULTICAST
         "Enable multicast support for OPC UA and registering with LDS" OFF
 )
+# Enables opc.ws:// and opc.wss:// endpoints alongside the plain opc.tcp:// endpoint,
+# using the ports immediately above it (opc.ws:// on port+1 and opc.wss:// on port+2).
+# On platforms built with UA_ENABLE_LWS (libwebsockets, POSIX-only), open62541
+# provides the "websocket" ConnectionManager itself. On platforms without
+# libwebsockets (RTOS targets such as FreeRTOS/Zephyr), that ConnectionManager
+# has to be registered by the platform's own code instead.
+# sourcery skip: javascript.lang.security.detect-insecure-websocket
+option(FORTE_COM_OPC_UA_WEBSOCKET
+        "Enable OPC UA over WebSocket server endpoints." OFF
+)
+
+if (FORTE_COM_OPC_UA_WEBSOCKET)
+    # Intentional opc.ws:// support (builder-configurable, off when INSECURE=OFF)
+    # sourcery skip: javascript.lang.security.detect-insecure-websocket
+    option(FORTE_COM_OPC_UA_WEBSOCKET_INSECURE
+            "Enable unencrypted OPC UA over WebSocket (opc.ws://) endpoint" OFF
+    )
+    option(FORTE_COM_OPC_UA_WEBSOCKET_SECURE
+            "Enable secure OPC UA over WebSocket (opc.wss://) endpoint" ON
+    )
+    if (NOT FORTE_COM_OPC_UA_WEBSOCKET_INSECURE AND NOT FORTE_COM_OPC_UA_WEBSOCKET_SECURE)
+        message(FATAL_ERROR "FORTE_COM_OPC_UA_WEBSOCKET is enabled, but neither FORTE_COM_OPC_UA_WEBSOCKET_INSECURE nor FORTE_COM_OPC_UA_WEBSOCKET_SECURE is selected.")
+    endif ()
+
+    # UA_ServerConfig::webSocketEnabled/webSocketAllowUnencrypted/webSocketCertificate/
+    # webSocketPrivateKey and the UA_ENABLE_LWS macro are a patch on top of upstream
+    # open62541, not present in stock releases such as the "1.5.4" pulled in by the
+    # find_package() fallback below. Checked via plain CMAKE_REQUIRED_INCLUDES rather
+    # than linking open62541::open62541: FORTE_COM_OPC_UA_INCLUDE_DIR mode is
+    # headers-only by design (see comment above) -- the library is compiled and linked
+    # one level up (e.g. as its own ESP-IDF component), so there is nothing to link
+    # against yet here, and a link-based check would always spuriously fail.
+    get_target_property(FORTE_COM_OPC_UA_WS_CHECK_INCLUDES open62541::open62541 INTERFACE_INCLUDE_DIRECTORIES)
+    if (NOT FORTE_COM_OPC_UA_WS_CHECK_INCLUDES)
+        set(FORTE_COM_OPC_UA_WS_CHECK_INCLUDES "")
+    endif ()
+    string(REGEX REPLACE "\\$<BUILD_INTERFACE:([^>]*)>" "\\1" FORTE_COM_OPC_UA_WS_CHECK_INCLUDES "${FORTE_COM_OPC_UA_WS_CHECK_INCLUDES}")
+    string(REGEX REPLACE "\\$<INSTALL_INTERFACE:[^>]*>" "" FORTE_COM_OPC_UA_WS_CHECK_INCLUDES "${FORTE_COM_OPC_UA_WS_CHECK_INCLUDES}")
+
+    include(CheckStructHasMember)
+    include(CheckSymbolExists)
+    include(CMakePushCheckState)
+    cmake_push_check_state(RESET)
+    set(CMAKE_REQUIRED_INCLUDES ${FORTE_COM_OPC_UA_WS_CHECK_INCLUDES})
+    check_struct_has_member("UA_ServerConfig" webSocketEnabled "open62541/server.h"
+            FORTE_COM_OPC_UA_HAS_WS_ENABLED LANGUAGE C)
+    check_struct_has_member("UA_ServerConfig" webSocketAllowUnencrypted "open62541/server.h"
+            FORTE_COM_OPC_UA_HAS_WS_ALLOW_UNENCRYPTED LANGUAGE C)
+    check_struct_has_member("UA_ServerConfig" webSocketCertificate "open62541/server.h"
+            FORTE_COM_OPC_UA_HAS_WS_CERTIFICATE LANGUAGE C)
+    check_struct_has_member("UA_ServerConfig" webSocketPrivateKey "open62541/server.h"
+            FORTE_COM_OPC_UA_HAS_WS_PRIVATE_KEY LANGUAGE C)
+    check_symbol_exists(UA_ENABLE_LWS "open62541/config.h" FORTE_COM_OPC_UA_HAS_UA_ENABLE_LWS)
+    cmake_pop_check_state()
+    unset(FORTE_COM_OPC_UA_WS_CHECK_INCLUDES)
+
+    if (NOT (FORTE_COM_OPC_UA_HAS_WS_ENABLED AND FORTE_COM_OPC_UA_HAS_WS_ALLOW_UNENCRYPTED AND
+             FORTE_COM_OPC_UA_HAS_WS_CERTIFICATE AND FORTE_COM_OPC_UA_HAS_WS_PRIVATE_KEY))
+        message(FATAL_ERROR
+                "FORTE_COM_OPC_UA_WEBSOCKET requires an open62541 build with WebSocket support on "
+                "UA_ServerConfig (webSocketEnabled, webSocketAllowUnencrypted, webSocketCertificate, "
+                "webSocketPrivateKey), which stock upstream open62541 does not have. Point "
+                "FORTE_COM_OPC_UA_INCLUDE_DIR at a patched open62541 checkout instead of relying on "
+                "find_package(open62541).")
+    endif ()
+
+    # opc.wss:// (the secure transport) is only ever provided by open62541's LWS-based
+    # ConnectionManager (see opcua_local_handler.cpp) -- the platform-ConnectionManager
+    # fallback for platforms without libwebsockets only ever supports plain opc.ws://.
+    # So with the default SECURE=ON/INSECURE=OFF, a UA_ENABLE_LWS-less open62541 build
+    # would silently register no WebSocket endpoint at all despite
+    # FORTE_COM_OPC_UA_WEBSOCKET being on.
+    if (FORTE_COM_OPC_UA_WEBSOCKET_SECURE AND NOT FORTE_COM_OPC_UA_WEBSOCKET_INSECURE
+            AND NOT FORTE_COM_OPC_UA_HAS_UA_ENABLE_LWS)
+        message(FATAL_ERROR
+                "FORTE_COM_OPC_UA_WEBSOCKET_SECURE (opc.wss://) requires an open62541 build with "
+                "UA_ENABLE_LWS -- it is the only backend that supports the secure transport; the "
+                "platform-ConnectionManager fallback (FORTE_COM_OPC_UA_WEBSOCKET_CONNECTIONMANAGER_DIR) "
+                "only ever supports opc.ws://. Either use an open62541 build with UA_ENABLE_LWS, or set "
+                "FORTE_COM_OPC_UA_WEBSOCKET_INSECURE=ON to get opc.ws:// via the platform "
+                "ConnectionManager instead.")
+    endif ()
+else ()
+    set(FORTE_COM_OPC_UA_WEBSOCKET_INSECURE OFF)
+    set(FORTE_COM_OPC_UA_WEBSOCKET_SECURE OFF)
+endif ()
+
+# On platforms without UA_ENABLE_LWS (RTOS targets, see comment above), the
+# "websocket" ConnectionManager has to come from the platform's own code.
+# FORTE_COM_OPC_UA_WEBSOCKET_CONNECTIONMANAGER_DIR points at the directory
+# providing that implementation's header (ws_connection_manager.h); on
+# ESP-IDF targets its .c is compiled and linked one level up, as the outer
+# project's own "open62541" component, so forte only needs the header here
+# to type-check against - never a real library to link, same rationale as
+# FORTE_COM_OPC_UA_INCLUDE_DIR above.
+set(FORTE_COM_OPC_UA_WEBSOCKET_CONNECTIONMANAGER_DIR
+        CACHE PATH
+        "Directory containing ws_connection_manager.h, providing the \"websocket\" UA_ConnectionManager on platforms without UA_ENABLE_LWS"
+)
 set(FORTE_COM_OPC_UA_CUSTOM_HOSTNAME
         CACHE STRING
         "Custom hostname which is used for the OPC UA app name and app uri"
@@ -61,6 +181,15 @@ option(FORTE_COM_OPC_UA_AC "Enable OPC UA A&C Support" OFF)
 add_library(forte-com-opc_ua)
 target_link_libraries(forte-com-opc_ua PUBLIC forte-core open62541::open62541)
 target_link_libraries(forte PUBLIC $<IF:$<BOOL:${BUILD_SHARED_LIBS}>,forte-com-opc_ua,$<LINK_LIBRARY:WHOLE_ARCHIVE,forte-com-opc_ua>>)
+
+if (FORTE_COM_OPC_UA_WEBSOCKET_CONNECTIONMANAGER_DIR)
+    get_filename_component(FORTE_COM_OPC_UA_WEBSOCKET_CONNECTIONMANAGER_DIR_ABS
+            "${FORTE_COM_OPC_UA_WEBSOCKET_CONNECTIONMANAGER_DIR}" ABSOLUTE)
+    target_include_directories(forte-com-opc_ua PRIVATE
+            $<BUILD_INTERFACE:${FORTE_COM_OPC_UA_WEBSOCKET_CONNECTIONMANAGER_DIR_ABS}>
+    )
+    target_compile_definitions(forte-com-opc_ua PRIVATE FORTE_COM_OPC_UA_WEBSOCKET_CONNECTIONMANAGER)
+endif ()
 
 add_subdirectory(include)
 add_subdirectory(src)
