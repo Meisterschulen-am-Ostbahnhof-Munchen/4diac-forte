@@ -50,7 +50,7 @@ target_sources(forte-com-opc_ua PRIVATE
         $<$<BOOL:${FORTE_COM_OPC_UA_AC}>:${CMAKE_CURRENT_SOURCE_DIR}/opcua_ac_layer.cpp>
         $<$<BOOL:${FORTE_COM_OPC_UA_AC}>:${CMAKE_CURRENT_SOURCE_DIR}/opcua_ac_layer.h>
 )
-target_include_directories(forte-com-opc_ua PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(forte-com-opc_ua PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 
 add_subdirectory(types)
 add_subdirectory(detail)
