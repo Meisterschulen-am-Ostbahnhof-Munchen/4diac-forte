@@ -296,9 +296,9 @@ namespace forte {
   std::strong_ordering CIEC_WSTRING::compare(const CIEC_WSTRING &paValue) const {
     const char *const lhsPtr = getValue();
     const char *const rhsPtr = paValue.getValue();
-    const std::string_view lhs = lhsPtr != nullptr ? std::string_view(lhsPtr) : std::string_view();
-    const std::string_view rhs = rhsPtr != nullptr ? std::string_view(rhsPtr) : std::string_view();
-    return lhs <=> rhs;
+    const char *const lhs = lhsPtr != nullptr ? lhsPtr : "";
+    const char *const rhs = rhsPtr != nullptr ? rhsPtr : "";
+    return strcmp(lhs, rhs) <=> 0;
   }
 
   const StringId CDataTypeTrait<CIEC_WSTRING>::scmDataTypeName = "WSTRING"_STRID;
