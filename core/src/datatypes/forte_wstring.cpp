@@ -13,8 +13,11 @@
  *      - initial implementation and rework communication infrastructure
  *   Martin Melik Merkumians - fixes behavior for getToStringBufferSize
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - add compare() with std::strong_ordering
  *******************************************************************************/
 #include "forte/datatypes/forte_wstring.h"
+
+#include <string_view>
 
 #include "forte/util/devlog.h"
 
@@ -288,6 +291,14 @@ namespace forte {
     } else {
       DEVLOG_WARNING("CIEC_WSTRING::fromCharString - Attempt to assign null, no action performed!\n");
     }
+  }
+
+  std::strong_ordering CIEC_WSTRING::compare(const CIEC_WSTRING &paValue) const {
+    const char *const lhsPtr = getValue();
+    const char *const rhsPtr = paValue.getValue();
+    const char *const lhs = lhsPtr != nullptr ? lhsPtr : "";
+    const char *const rhs = rhsPtr != nullptr ? rhsPtr : "";
+    return strcmp(lhs, rhs) <=> 0;
   }
 
   const StringId CDataTypeTrait<CIEC_WSTRING>::scmDataTypeName = "WSTRING"_STRID;

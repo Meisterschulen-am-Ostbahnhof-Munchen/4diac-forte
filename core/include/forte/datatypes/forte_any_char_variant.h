@@ -36,7 +36,7 @@ namespace forte {
       using TIecAnyCharVariantType::variant;
       using TIecAnyCharVariantType::operator=;
       template<class>
-      static inline constexpr bool always_false_v = false;
+      static constexpr bool always_false_v = false;
 
       CIEC_ANY_CHAR_VARIANT(const CIEC_ANY_CHAR_VARIANT &paVal) : CIEC_ANY_CHAR(), variant(paVal) {
       }

@@ -34,7 +34,7 @@ namespace forte {
       using TIecAnyDerivedVariantType::variant;
       using TIecAnyDerivedVariantType::operator=;
       template<class>
-      static inline constexpr bool always_false_v = false;
+      static constexpr bool always_false_v = false;
 
       CIEC_ANY_DERIVED_VARIANT() : variant(std::make_unique<CIEC_ANY_STRUCT>()) {
       }

@@ -73,6 +73,21 @@ namespace forte {
         return e_BOOL;
       }
 
+      using CIEC_ANY_BIT::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_BOOL &paOther) const {
+        return static_cast<unsigned int>(*this) <=> static_cast<unsigned int>(paOther);
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_BOOL &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_BOOL &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
+      }
+
       /*! \brief Converts string value to data type value
        *
        *   This command implements a conversion function from IEC 61131
@@ -95,10 +110,10 @@ namespace forte {
     private:
   };
 
-  inline constexpr CIEC_BOOL true_BOOL = CIEC_BOOL(true);
-  inline constexpr CIEC_BOOL false_BOOL = CIEC_BOOL(false);
+  constexpr CIEC_BOOL true_BOOL = CIEC_BOOL(true);
+  constexpr CIEC_BOOL false_BOOL = CIEC_BOOL(false);
 
-  consteval inline CIEC_BOOL operator""_BOOL(unsigned long long int paValue) {
+  constexpr CIEC_BOOL operator""_BOOL(unsigned long long int paValue) {
     return CIEC_BOOL(paValue);
   }
 

@@ -127,6 +127,15 @@ namespace forte::test {
 
     BOOST_CHECK(!(CIEC_WSTRING(cWStringTest1) != sTest2));
     BOOST_CHECK_EQUAL(strcmp(sTest2.getValue(), cWStringTest2), 0);
+
+    BOOST_CHECK((sTest1 <=> sTest2) == std::strong_ordering::equivalent);
+    BOOST_CHECK((sTest1 <=> sTest3) == std::strong_ordering::less);
+    BOOST_CHECK((sTest3 <=> sTest1) == std::strong_ordering::greater);
+
+    BOOST_CHECK(sTest1 < sTest3);
+    BOOST_CHECK(sTest3 > sTest1);
+    BOOST_CHECK(sTest1 <= sTest2);
+    BOOST_CHECK(sTest1 >= sTest2);
   }
 
   BOOST_AUTO_TEST_CASE(String_equals) {

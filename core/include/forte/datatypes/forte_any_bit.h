@@ -31,6 +31,26 @@ namespace forte {
     public:
       constexpr ~CIEC_ANY_BIT() override = default;
 
+      virtual constexpr std::strong_ordering compare(const CIEC_ANY_BIT &paOther) const {
+        return getLargestUInt() <=> paOther.getLargestUInt();
+      }
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == getDataTypeID()) {
+          return compare(static_cast<const CIEC_ANY_BIT &>(paOther));
+        }
+        return std::partial_ordering::unordered;
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_ANY_BIT &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_ANY_BIT &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
+      }
+
       void reset() override {
         setTUINT64(0);
       }

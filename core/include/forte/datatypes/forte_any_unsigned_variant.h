@@ -43,7 +43,7 @@ namespace forte {
       using TIecAnyUnsignedVariantType::variant;
       using TIecAnyUnsignedVariantType::operator=;
       template<class>
-      static inline constexpr bool always_false_v = false;
+      static constexpr bool always_false_v = false;
 
       CIEC_ANY_UNSIGNED_VARIANT(const CIEC_ANY_UNSIGNED_VARIANT &paVal) : CIEC_ANY_UNSIGNED(), variant(paVal) {
       }

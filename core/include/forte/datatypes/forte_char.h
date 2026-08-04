@@ -65,20 +65,37 @@ namespace forte {
 
       int fromString(const char *paValue) override;
 
-      EDataTypeID getDataTypeID() const final {
+      constexpr EDataTypeID getDataTypeID() const override {
         return e_CHAR;
+      }
+
+      using CIEC_ANY::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_CHAR &paOther) const {
+        return static_cast<TForteChar>(*this) <=> static_cast<TForteChar>(paOther);
+      }
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == getDataTypeID()) {
+          return compare(static_cast<const CIEC_CHAR &>(paOther));
+        }
+        return std::partial_ordering::unordered;
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_CHAR &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_CHAR &paOther) const {
+        return compare(paOther) == std::strong_ordering::equal;
       }
   };
 
-  inline bool operator==(const CIEC_CHAR &lhs, const CIEC_CHAR &rhs) {
-    return static_cast<CIEC_CHAR::TValueType>(lhs) == static_cast<CIEC_CHAR::TValueType>(rhs);
-  }
-
-  consteval inline CIEC_CHAR operator""_CHAR(char paValue) {
+  constexpr CIEC_CHAR operator""_CHAR(char paValue) {
     return CIEC_CHAR(static_cast<CIEC_CHAR::TValueType>(paValue));
   }
 
-  consteval inline CIEC_CHAR operator""_CHAR(unsigned long long int paValue) {
+  constexpr CIEC_CHAR operator""_CHAR(unsigned long long int paValue) {
     return CIEC_CHAR(static_cast<CIEC_CHAR::TValueType>(paValue));
   }
 

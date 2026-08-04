@@ -82,6 +82,21 @@ namespace forte {
         return e_LTIME;
       }
 
+      using CIEC_ANY_DURATION::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_LTIME &paOther) const {
+        return static_cast<TValueType>(*this) <=> static_cast<TValueType>(paOther);
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_LTIME &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_LTIME &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
+      }
+
       /*! \brief Converts string value to data type value
        *
        *   This command implements a conversion function from IEC61131
@@ -116,7 +131,7 @@ namespace forte {
       void setFromNanoSeconds(TValueType paValue);
   };
 
-  consteval inline CIEC_LTIME operator""_LTIME(unsigned long long int paValue) {
+  constexpr CIEC_LTIME operator""_LTIME(unsigned long long int paValue) {
     return CIEC_LTIME(static_cast<CIEC_LTIME::TValueType>(paValue));
   }
 

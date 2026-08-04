@@ -48,7 +48,7 @@ namespace forte::util {
       constexpr explicit fixed_string(Chars... chars) noexcept : data_{chars...} {
       }
 
-      consteval explicit(false) fixed_string(const char (&txt)[N + 1]) noexcept {
+      constexpr explicit(false) fixed_string(const char (&txt)[N + 1]) noexcept {
         std::copy_n(txt, N, data_);
       }
 
@@ -164,7 +164,7 @@ namespace forte::util {
       }
 
       template<size_t N2>
-      consteval friend fixed_string<N + N2 - 1> operator+(const fixed_string &lhs, const char (&rhs)[N2]) noexcept {
+      constexpr friend fixed_string<N + N2 - 1> operator+(const fixed_string &lhs, const char (&rhs)[N2]) noexcept {
         fixed_string<N + N2 - 1> result;
         std::copy_n(lhs.data_, N, result.data_);
         std::copy_n(rhs, N2, result.data_ + N);
@@ -172,7 +172,7 @@ namespace forte::util {
       }
 
       template<size_t N1>
-      consteval friend fixed_string<N1 + N - 1> operator+(const char (&lhs)[N1], const fixed_string &rhs) noexcept {
+      constexpr friend fixed_string<N1 + N - 1> operator+(const char (&lhs)[N1], const fixed_string &rhs) noexcept {
         fixed_string<N1 + N - 1> result;
         std::copy_n(lhs, N1, result.data_);
         std::copy_n(rhs.data_, N, result.data_ + N1);
@@ -185,7 +185,7 @@ namespace forte::util {
       }
 
       template<size_t N2>
-      friend consteval bool operator==(const fixed_string &lhs, const char (&rhs)[N2]) {
+      friend constexpr bool operator==(const fixed_string &lhs, const char (&rhs)[N2]) {
         return lhs.view() == basic_string_view<char>(rhs, rhs + N2 - 1);
       }
 
@@ -195,7 +195,7 @@ namespace forte::util {
       }
 
       template<size_t N2>
-      friend consteval auto operator<=>(const fixed_string &lhs, const char (&rhs)[N2]) {
+      friend constexpr auto operator<=>(const fixed_string &lhs, const char (&rhs)[N2]) {
         return lhs.view() <=> basic_string_view<char>(rhs, rhs + N2 - 1);
       }
 

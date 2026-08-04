@@ -170,5 +170,30 @@ namespace forte::test {
     BOOST_TEST(!test1.equals(test2));
   }
 
+  BOOST_AUTO_TEST_CASE(Pointer_Round_Trip_test) {
+    struct TestAny : public CIEC_ANY {
+        void reset() override {
+          // Minimal mock implementation: no state to reset
+        }
+        CIEC_ANY *clone(TForteByte *) const override {
+          return nullptr;
+        }
+        int fromString(const char *) override {
+          return -1;
+        }
+        void toString(std::string &) const override {
+          // Minimal mock implementation: no state to represent as string
+        }
+
+        void testRoundTrip(std::byte *ptr) {
+          setGenData(ptr);
+          BOOST_TEST(getGenData() == ptr);
+        }
+    };
+    TestAny test;
+    std::array<std::byte, 10> data;
+    test.testRoundTrip(data.data());
+  }
+
   BOOST_AUTO_TEST_SUITE_END()
 } // namespace forte::test

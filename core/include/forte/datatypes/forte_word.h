@@ -100,6 +100,21 @@ namespace forte {
         return e_WORD;
       }
 
+      using CIEC_ANY_BIT::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_WORD &paOther) const {
+        return static_cast<TValueType>(*this) <=> static_cast<TValueType>(paOther);
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_WORD &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_WORD &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
+      }
+
       /*! \brief Partial access within a CIEC_WORD (e.g. [WORD].partial<CIEC_BOOL>(1))
        *
        */
@@ -134,7 +149,7 @@ namespace forte {
       }
   };
 
-  consteval inline CIEC_WORD operator""_WORD(unsigned long long int paValue) {
+  constexpr CIEC_WORD operator""_WORD(unsigned long long int paValue) {
     return CIEC_WORD(static_cast<CIEC_WORD::TValueType>(paValue));
   }
 

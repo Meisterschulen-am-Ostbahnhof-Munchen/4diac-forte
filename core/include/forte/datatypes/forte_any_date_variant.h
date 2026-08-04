@@ -43,7 +43,7 @@ namespace forte {
       using TIecAnyDateVariantType::variant;
       using TIecAnyDateVariantType::operator=;
       template<class>
-      static inline constexpr bool always_false_v = false;
+      static constexpr bool always_false_v = false;
 
       CIEC_ANY_DATE_VARIANT(const CIEC_ANY_DATE_VARIANT &paVal) : CIEC_ANY_DATE(), variant(paVal) {
       }

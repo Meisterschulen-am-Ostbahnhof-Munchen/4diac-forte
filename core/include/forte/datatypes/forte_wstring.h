@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: EPL-2.0
  *
  * Contributors:
- *   Thomas Strasser, Ingomar Müller, Alois Zoitl, Ingo Hegny, Stanislav Meduna
+ *   Thomas Strasser, Ingomar Müller, Rene Smodic, Alois Zoitl, Ingo Hegny, Stanislav Meduna
  *     Martin Melik Merkumians, Matthias Plasch, Monika Wenger
  *      - initial implementation and rework communication infrastructure
  *   Martin Melik Merkumians
@@ -21,6 +21,7 @@
  *                - add equals function
  *                - add user-defined literal
  *   Alois Zoitl  - migrated data type toString to std::string
+ *   Franz Höpfinger - compare() with std::strong_ordering, refactor to operator<=>
  *******************************************************************************/
 
 #pragma once
@@ -29,6 +30,7 @@
 #include "forte/datatypes/forte_wchar.h"
 
 #include <codecvt>
+#include <compare>
 
 namespace forte {
   /*!\ingroup COREDTS \brief CIEC_WSTRING represents the wide string data type according to IEC 61131.
@@ -185,9 +187,28 @@ namespace forte {
 
       [[nodiscard]] bool equals(const CIEC_ANY &paOther) const override {
         if (paOther.getDataTypeID() == e_WSTRING) {
-          return 0 == strcmp(getValue(), static_cast<const CIEC_WSTRING &>(paOther).getValue());
+          return std::is_eq(compare(static_cast<const CIEC_WSTRING &>(paOther)));
         }
         return false;
+      }
+
+      using CIEC_ANY::compare;
+
+      std::strong_ordering compare(const CIEC_WSTRING &paValue) const;
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == e_WSTRING) {
+          return compare(static_cast<const CIEC_WSTRING &>(paOther));
+        }
+        return std::partial_ordering::unordered;
+      }
+
+      friend inline bool operator==(const CIEC_WSTRING &paLeft, const CIEC_WSTRING &paRight) {
+        return std::is_eq(paLeft.compare(paRight));
+      }
+
+      friend inline std::strong_ordering operator<=>(const CIEC_WSTRING &paLeft, const CIEC_WSTRING &paRight) {
+        return paLeft.compare(paRight);
       }
 
     protected:
@@ -195,30 +216,6 @@ namespace forte {
 
     private:
   };
-
-  inline bool operator==(const CIEC_WSTRING &paLeft, const CIEC_WSTRING &paRight) {
-    return (0 == strcmp(paLeft.getValue(), paRight.getValue()));
-  }
-
-  inline bool operator!=(const CIEC_WSTRING &paLeft, const CIEC_WSTRING &paRight) {
-    return !(paLeft == paRight);
-  }
-
-  inline bool operator>(const CIEC_WSTRING &paLeft, const CIEC_WSTRING &paRight) {
-    return (0 < strcmp(paLeft.getValue(), paRight.getValue()));
-  }
-
-  inline bool operator<(const CIEC_WSTRING &paLeft, const CIEC_WSTRING &paRight) {
-    return (0 > strcmp(paLeft.getValue(), paRight.getValue()));
-  }
-
-  inline bool operator>=(const CIEC_WSTRING &paLeft, const CIEC_WSTRING &paRight) {
-    return (0 <= strcmp(paLeft.getValue(), paRight.getValue()));
-  }
-
-  inline bool operator<=(const CIEC_WSTRING &paLeft, const CIEC_WSTRING &paRight) {
-    return (0 >= strcmp(paLeft.getValue(), paRight.getValue()));
-  }
 
   inline CIEC_WSTRING operator""_WSTRING(const char16_t *paValue, size_t paLength) {
     return CIEC_WSTRING(paValue, paLength);

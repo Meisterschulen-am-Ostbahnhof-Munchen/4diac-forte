@@ -41,68 +41,39 @@ namespace forte {
       static constexpr int_fast64_t csmForteTimeBaseUnitsPerHour = csmForteTimeBaseUnitsPerMinute * 60;
       static constexpr int_fast64_t csmForteTimeBaseUnitsPerDay = csmForteTimeBaseUnitsPerHour * 24;
 
-      template<typename T,
-               typename U,
-               std::enable_if_t<
-                   std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
-                   int> = 0>
-      friend constexpr bool operator==(const T &paLeft, const U &paRight) {
+      template<typename T>
+        requires std::is_base_of_v<CIEC_ANY_DURATION, T>
+      friend constexpr bool operator==(const T &paLeft, const T &paRight) {
         return static_cast<typename T::TValueType>(paLeft) == static_cast<typename T::TValueType>(paRight);
       }
 
-      template<typename T,
-               typename U,
-               std::enable_if_t<
-                   std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
-                   int> = 0>
-      friend constexpr bool operator!=(const T &paLeft, const U &paRight) {
-        return !(paLeft == paRight);
+      template<typename T>
+        requires std::is_base_of_v<CIEC_ANY_DURATION, T>
+      friend constexpr std::strong_ordering operator<=>(const T &paLeft, const T &paRight) {
+        return static_cast<typename T::TValueType>(paLeft) <=> static_cast<typename T::TValueType>(paRight);
       }
 
-      template<typename T,
-               typename U,
-               std::enable_if_t<
-                   std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
-                   int> = 0>
-      friend constexpr bool operator<(const T &paLeft, const U &paRight) {
-        return static_cast<typename T::TValueType>(paLeft) < static_cast<typename T::TValueType>(paRight);
-      }
-
-      template<typename T,
-               typename U,
-               std::enable_if_t<
-                   std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
-                   int> = 0>
-      friend constexpr bool operator>(const T &paLeft, const U &paRight) {
-        return static_cast<typename T::TValueType>(paLeft) > static_cast<typename T::TValueType>(paRight);
-      }
-
-      template<typename T,
-               typename U,
-               std::enable_if_t<
-                   std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
-                   int> = 0>
-      friend constexpr bool operator<=(const T &paLeft, const U &paRight) {
-        return paLeft == paRight || paLeft < paRight;
-      }
-
-      template<typename T,
-               typename U,
-               std::enable_if_t<
-                   std::conjunction_v<std::is_base_of<CIEC_ANY_DURATION, T>, std::is_base_of<CIEC_ANY_DURATION, U>>,
-                   int> = 0>
-      friend constexpr bool operator>=(const T &paLeft, const U &paRight) {
-        return paLeft == paRight || paLeft > paRight;
-      }
-
-      template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DURATION, T>, int> = 0>
+      template<typename T>
+        requires std::is_base_of_v<CIEC_ANY_DURATION, T>
       friend constexpr T operator+(const T &paLeft, const T &paRight) {
         return T(static_cast<typename T::TValueType>(paLeft) + static_cast<typename T::TValueType>(paRight));
       }
 
-      template<typename T, std::enable_if_t<std::is_base_of_v<CIEC_ANY_DURATION, T>, int> = 0>
+      template<typename T>
+        requires std::is_base_of_v<CIEC_ANY_DURATION, T>
       friend constexpr T operator-(const T &paLeft, const T &paRight) {
         return T(static_cast<typename T::TValueType>(paLeft) - static_cast<typename T::TValueType>(paRight));
+      }
+
+      constexpr std::strong_ordering compare(const CIEC_ANY_DURATION &paOther) const {
+        return getLargestInt() <=> paOther.getLargestInt();
+      }
+
+      constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == getDataTypeID()) {
+          return compare(static_cast<const CIEC_ANY_DURATION &>(paOther));
+        }
+        return std::partial_ordering::unordered;
       }
 
       constexpr ~CIEC_ANY_DURATION() override = default;

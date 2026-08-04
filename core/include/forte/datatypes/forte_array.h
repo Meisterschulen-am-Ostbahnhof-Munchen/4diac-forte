@@ -31,7 +31,7 @@ namespace forte {
   /** \brief A common supertype for all CIEC_ARRAY variants, providing the minimal interface an array must provide
    */
   class CIEC_ARRAY : public CIEC_ANY_DERIVED {
-      friend bool operator==(const CIEC_ARRAY &paLeft, const CIEC_ARRAY &paRight) {
+      friend constexpr bool operator==(const CIEC_ARRAY &paLeft, const CIEC_ARRAY &paRight) {
         if (paLeft.getLowerBound() != paRight.getLowerBound() || paLeft.getUpperBound() != paRight.getUpperBound()) {
           return false;
         }
@@ -44,7 +44,7 @@ namespace forte {
         return true;
       }
 
-      friend bool operator!=(const CIEC_ARRAY &paLeft, const CIEC_ARRAY &paRight) {
+      friend constexpr bool operator!=(const CIEC_ARRAY &paLeft, const CIEC_ARRAY &paRight) {
         return !(paLeft == paRight);
       }
 
@@ -55,27 +55,27 @@ namespace forte {
       using reference = value_type &;
       using const_reference = const value_type &;
 
-      [[nodiscard]] virtual intmax_t getLowerBound() const = 0;
+      [[nodiscard]] virtual constexpr intmax_t getLowerBound() const = 0;
 
-      [[nodiscard]] virtual intmax_t getUpperBound() const = 0;
+      [[nodiscard]] virtual constexpr intmax_t getUpperBound() const = 0;
 
-      [[nodiscard]] virtual intmax_t getLowerBound(intmax_t paDimension) const = 0;
+      [[nodiscard]] virtual constexpr intmax_t getLowerBound(intmax_t paDimension) const = 0;
 
-      [[nodiscard]] virtual intmax_t getUpperBound(intmax_t paDimension) const = 0;
+      [[nodiscard]] virtual constexpr intmax_t getUpperBound(intmax_t paDimension) const = 0;
 
-      [[nodiscard]] virtual size_t size() const = 0;
+      [[nodiscard]] virtual constexpr size_t size() const = 0;
 
-      [[nodiscard]] virtual EDataTypeID getElementDataTypeID() const = 0;
+      [[nodiscard]] virtual constexpr EDataTypeID getElementDataTypeID() const = 0;
 
-      [[nodiscard]] virtual StringId getElementTypeNameID() const = 0;
+      [[nodiscard]] virtual constexpr StringId getElementTypeNameID() const = 0;
 
-      [[nodiscard]] virtual reference at(intmax_t index) = 0;
+      [[nodiscard]] virtual constexpr reference at(intmax_t index) = 0;
 
-      [[nodiscard]] virtual reference operator[](intmax_t index) = 0;
+      [[nodiscard]] virtual constexpr reference operator[](intmax_t index) = 0;
 
-      [[nodiscard]] virtual const_reference at(intmax_t index) const = 0;
+      [[nodiscard]] virtual constexpr const_reference at(intmax_t index) const = 0;
 
-      [[nodiscard]] virtual const_reference operator[](intmax_t index) const = 0;
+      [[nodiscard]] virtual constexpr const_reference operator[](intmax_t index) const = 0;
 
       bool isIndexInRange(const intmax_t index) const {
         return getLowerBound() <= index && index <= getUpperBound();
@@ -90,24 +90,46 @@ namespace forte {
         return *this;
       }
 
-      [[nodiscard]] virtual reference at(const CIEC_ANY_INT &index) {
+      [[nodiscard]] virtual constexpr reference at(const CIEC_ANY_INT &index) {
         const intmax_t indexValue = index.getSignedValue();
         return at(indexValue);
       }
 
-      [[nodiscard]] virtual reference operator[](const CIEC_ANY_INT &index) {
+      [[nodiscard]] virtual constexpr reference operator[](const CIEC_ANY_INT &index) {
         const intmax_t indexValue = index.getSignedValue();
         return operator[](indexValue);
       }
 
-      [[nodiscard]] virtual const_reference at(const CIEC_ANY_INT &index) const {
+      [[nodiscard]] virtual constexpr const_reference at(const CIEC_ANY_INT &index) const {
         const intmax_t indexValue = index.getSignedValue();
         return at(indexValue);
       }
 
-      [[nodiscard]] virtual const_reference operator[](const CIEC_ANY_INT &index) const {
+      [[nodiscard]] virtual constexpr const_reference operator[](const CIEC_ANY_INT &index) const {
         const intmax_t indexValue = index.getSignedValue();
         return operator[](indexValue);
+      }
+
+      [[nodiscard]] constexpr std::partial_ordering compare(const CIEC_ARRAY &paOther) const {
+        if (getElementDataTypeID() != paOther.getElementDataTypeID() || getLowerBound() != paOther.getLowerBound() ||
+            getUpperBound() != paOther.getUpperBound()) {
+          return std::partial_ordering::unordered;
+        }
+
+        for (intmax_t i = getLowerBound(), end = getUpperBound(); i <= end; ++i) {
+          auto res = (*this)[i].compare(paOther[i]);
+          if (res != std::partial_ordering::equivalent) {
+            return res;
+          }
+        }
+        return std::partial_ordering::equivalent;
+      }
+
+      [[nodiscard]] constexpr std::partial_ordering compare(const CIEC_ANY &paOther) const override {
+        if (paOther.getDataTypeID() == e_ARRAY) {
+          return compare(static_cast<const CIEC_ARRAY &>(paOther));
+        }
+        return std::partial_ordering::unordered;
       }
 
       [[nodiscard]] EDataTypeID getDataTypeID() const final {
@@ -135,10 +157,10 @@ namespace forte {
 
       void toString(std::string &paTargetBuf) const override;
 
-      ~CIEC_ARRAY() override = default;
+      constexpr ~CIEC_ARRAY() override = default;
 
     protected:
-      CIEC_ARRAY() = default;
+      constexpr CIEC_ARRAY() = default;
 
       static void findNextNonBlankSpace(const char **paRunner) {
         while (' ' == **paRunner) {
@@ -151,14 +173,27 @@ namespace forte {
       constexpr static void
       checkBounds(const intmax_t paIndex, const intmax_t paLowerBound, const intmax_t paUpperBound, bool paValid) {
         if (paIndex < paLowerBound || paIndex > paUpperBound || !paValid) {
+          // do not use if consteval { because it needs minimum /std:c++23preview
+          if (std::is_constant_evaluated()) {
 #if __cpp_exceptions
-          throw std::out_of_range("Array access to index " + std::to_string(paIndex) + " is out of bounds from " +
-                                  std::to_string(paLowerBound) + " to " + std::to_string(paUpperBound));
+            throw std::out_of_range("Array index out of bounds");
 #else
-          DEVLOG_ERROR("Array access to index %" PRIdMAX " is out of bounds from %" PRIdMAX " to %" PRIdMAX "\n",
-                       paIndex, paLowerBound, paUpperBound);
-          std::abort();
+            struct ConstexprAssert {
+                static void array_index_out_of_bounds() {
+                }
+            };
+            ConstexprAssert::array_index_out_of_bounds();
 #endif
+          } else {
+#if __cpp_exceptions
+            throw std::out_of_range("Array access to index " + std::to_string(paIndex) + " is out of bounds from " +
+                                    std::to_string(paLowerBound) + " to " + std::to_string(paUpperBound));
+#else
+            DEVLOG_ERROR("Array access to index %" PRIdMAX " is out of bounds from %" PRIdMAX " to %" PRIdMAX "\n",
+                         paIndex, paLowerBound, paUpperBound);
+            std::abort();
+#endif
+          }
         }
       }
 
@@ -168,7 +203,7 @@ namespace forte {
       void toCollapsedElementString(const CIEC_ANY &paElement, size_t paCount, std::string &paTargetBuf) const;
 
       template<typename U>
-      inline void assignDynamic(const U &paArray, intmax_t sourceLowerBound, intmax_t sourceUpperBound) {
+      constexpr void assignDynamic(const U &paArray, intmax_t sourceLowerBound, intmax_t sourceUpperBound) {
         if (size() && paArray.size()) { // check if initialized
           intmax_t begin = std::max(getLowerBound(), sourceLowerBound);
           intmax_t end = std::min(getUpperBound(), sourceUpperBound);

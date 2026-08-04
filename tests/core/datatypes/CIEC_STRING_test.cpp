@@ -180,6 +180,25 @@ namespace forte::test {
     BOOST_TEST(test1.length() == 0);
   }
 
+  BOOST_AUTO_TEST_CASE(String_comparison) {
+    CIEC_STRING test1("abc"_STRING);
+    CIEC_STRING test2("abc"_STRING);
+    CIEC_STRING test3("def"_STRING);
+
+    BOOST_CHECK((test1 <=> test2) == std::strong_ordering::equivalent);
+    BOOST_CHECK((test1 <=> test3) == std::strong_ordering::less);
+    BOOST_CHECK((test3 <=> test1) == std::strong_ordering::greater);
+
+    BOOST_CHECK((test1 <=> "abc"s) == std::strong_ordering::equivalent);
+    BOOST_CHECK((test1 <=> "def"s) == std::strong_ordering::less);
+    BOOST_CHECK(("def"s <=> test1) == std::strong_ordering::greater);
+
+    BOOST_TEST(test1 < test3);
+    BOOST_TEST(test3 > test1);
+    BOOST_TEST(test1 <= test2);
+    BOOST_TEST(test1 >= test2);
+  }
+
   BOOST_AUTO_TEST_CASE(String_append) {
     CIEC_STRING test1("123456789"_STRING);
     BOOST_CHECK_EQUAL(test1.length(), 9);

@@ -15,6 +15,8 @@
  *******************************************************************************/
 
 #include "forte/iec61131/comparison/F_GE_fbt.h"
+#include "ComparisonHelper.h"
+#include "forte/funcbloc.h"
 
 using namespace forte::literals;
 
@@ -57,10 +59,12 @@ namespace forte::iec61131::comparison {
 
   void FORTE_F_GE::executeEvent(TEventID paEIID, CEventChainExecutionThread *const paECET) {
     switch (paEIID) {
-      case scmEventREQID:
-        var_OUT = CIEC_BOOL(var_IN1 >= var_IN2);
+      case scmEventREQID: {
+        const auto result = ComparisonHelper::compare(var_IN1, var_IN2, *this);
+        var_OUT = CIEC_BOOL(std::is_gteq(result));
         sendOutputEvent(scmEventCNFID, paECET);
         break;
+      }
     }
   }
 

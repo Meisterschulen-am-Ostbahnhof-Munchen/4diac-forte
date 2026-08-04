@@ -142,14 +142,14 @@ namespace forte {
       int unescapeFromString(const char *paValue, char paDelimiter);
 
       void setLength(TForteUInt16 paVal) {
-        TForteByte *pBuf = getGenData();
+        std::byte *pBuf = getGenData();
         if (nullptr != pBuf) {
           *((TForteUInt16 *) (pBuf)) = paVal;
         }
       }
 
       void setAllocatedLength(TForteUInt16 paVal) {
-        TForteByte *pBuf = getGenData();
+        std::byte *pBuf = getGenData();
         if (nullptr != pBuf) {
           *((TForteUInt16 *) (pBuf + 2)) = paVal;
         }

@@ -49,7 +49,7 @@ class CTXThread : public forte::arch::CThreadBase<ULONG> {
     ~CTXThread() override;
 
     //! Set the deadline of the thread.
-    void setDeadline(const CIEC_TIME &paVal) override final;
+    void setDeadline(const CIEC_TIME &paVal) final;
 
     /*! \brief Sleep the calling thread
      *

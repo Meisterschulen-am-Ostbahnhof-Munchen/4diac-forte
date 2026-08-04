@@ -69,6 +69,21 @@ namespace forte {
         return e_TIME_OF_DAY;
       }
 
+      using CIEC_ANY_DATE::compare;
+
+      constexpr std::strong_ordering compare(const CIEC_TIME_OF_DAY &paOther) const {
+        return static_cast<TForteUInt64>(*this) <=> static_cast<TForteUInt64>(paOther);
+      }
+
+      constexpr std::strong_ordering operator<=>(const CIEC_TIME_OF_DAY &paOther) const {
+        return compare(paOther);
+      }
+
+      constexpr bool operator==(const CIEC_TIME_OF_DAY &paOther) const {
+
+        return compare(paOther) == std::strong_ordering::equal;
+      }
+
       /*! \brief Converts string value to data type value
        *
        *   This command implements a conversion function from IEC 61131
@@ -90,7 +105,7 @@ namespace forte {
       void toString(std::string &paTargetBuf) const override;
   };
 
-  consteval inline CIEC_TIME_OF_DAY operator""_TIME_OF_DAY(unsigned long long int paValue) {
+  constexpr CIEC_TIME_OF_DAY operator""_TIME_OF_DAY(unsigned long long int paValue) {
     return CIEC_TIME_OF_DAY(static_cast<CIEC_TIME_OF_DAY::TValueType>(paValue));
   }
 

@@ -33,7 +33,7 @@ namespace forte::io {
       T var_OUT;
       CDataConnection *conn_OUT;
 
-      CIEC_ANY *getDI(size_t paIndex) override final {
+      CIEC_ANY *getDI(size_t paIndex) final override {
         if (paIndex == 2) {
           return &var_OUT;
         }
@@ -73,7 +73,7 @@ namespace forte::io {
         }
       }
 
-      CDataConnection **getDIConUnchecked(TPortId paIndex) override final {
+      CDataConnection **getDIConUnchecked(TPortId paIndex) final {
         if (paIndex == 2) {
           return &conn_OUT;
         }

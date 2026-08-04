@@ -374,5 +374,188 @@ namespace forte::test {
     BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(static_cast<CIEC_INT &>(arrayDestination[4])), 256);
   }
 
+  BOOST_AUTO_TEST_CASE(InitializerListAssignmentArray0To5) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> intArray(0, 5);
+    intArray = {10_INT, 20_INT, 30_INT, 40_INT, 50_INT, 60_INT};
+
+    BOOST_CHECK_EQUAL(intArray.getLowerBound(), 0);
+    BOOST_CHECK_EQUAL(intArray.getUpperBound(), 5);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[0]), 10);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[1]), 20);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[2]), 30);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[3]), 40);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[4]), 50);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[5]), 60);
+  }
+
+  BOOST_AUTO_TEST_CASE(InitializerListAssignmentArray2To7) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> intArray(2, 7);
+    intArray = {100_INT, 200_INT, 300_INT, 400_INT, 500_INT, 600_INT};
+
+    BOOST_CHECK_EQUAL(intArray.getLowerBound(), 2);
+    BOOST_CHECK_EQUAL(intArray.getUpperBound(), 7);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[2]), 100);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[3]), 200);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[4]), 300);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[5]), 400);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[6]), 500);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[7]), 600);
+  }
+
+  BOOST_AUTO_TEST_CASE(InitializerListAssignmentArray1To5) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> intArray(1, 5);
+    intArray = {11_INT, 22_INT, 33_INT, 44_INT, 55_INT};
+
+    BOOST_CHECK_EQUAL(intArray.getLowerBound(), 1);
+    BOOST_CHECK_EQUAL(intArray.getUpperBound(), 5);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[1]), 11);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[2]), 22);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[3]), 33);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[4]), 44);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[5]), 55);
+  }
+
+  BOOST_AUTO_TEST_CASE(InitializerListAssignmentArrayMinus1To1) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> intArray(-1, 1);
+    intArray = {-10_INT, -20_INT, -30_INT};
+
+    BOOST_CHECK_EQUAL(intArray.getLowerBound(), -1);
+    BOOST_CHECK_EQUAL(intArray.getUpperBound(), 1);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[-1]), -10);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[0]), -20);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[1]), -30);
+  }
+
+  BOOST_AUTO_TEST_CASE(InitializerListAssignmentArrayMinus5To5) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> intArray(-5, 5);
+    intArray = {1_INT, 2_INT, 3_INT, 4_INT, 5_INT, 6_INT, 7_INT, 8_INT, 9_INT, 10_INT, 11_INT};
+
+    BOOST_CHECK_EQUAL(intArray.getLowerBound(), -5);
+    BOOST_CHECK_EQUAL(intArray.getUpperBound(), 5);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[-5]), 1);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[-4]), 2);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[-3]), 3);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[-2]), 4);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[-1]), 5);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[0]), 6);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[1]), 7);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[2]), 8);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[3]), 9);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[4]), 10);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(intArray[5]), 11);
+  }
+
+  BOOST_AUTO_TEST_CASE(VariableToVariableCopyAssignmentArray0To5) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> source(0, 5);
+    source[0] = 10_INT;
+    source[1] = 20_INT;
+    source[2] = 30_INT;
+    source[3] = 40_INT;
+    source[4] = 50_INT;
+    source[5] = 60_INT;
+
+    CIEC_ARRAY_VARIABLE<CIEC_INT> destination(0, 5);
+    destination = source;
+
+    BOOST_CHECK_EQUAL(destination.getLowerBound(), 0);
+    BOOST_CHECK_EQUAL(destination.getUpperBound(), 5);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[0]), 10);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[1]), 20);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[2]), 30);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[3]), 40);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[4]), 50);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[5]), 60);
+  }
+
+  BOOST_AUTO_TEST_CASE(VariableToVariableCopyAssignmentArray2To7) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> source(2, 7);
+    source[2] = 100_INT;
+    source[3] = 200_INT;
+    source[4] = 300_INT;
+    source[5] = 400_INT;
+    source[6] = 500_INT;
+    source[7] = 600_INT;
+
+    CIEC_ARRAY_VARIABLE<CIEC_INT> destination(2, 7);
+    destination = source;
+
+    BOOST_CHECK_EQUAL(destination.getLowerBound(), 2);
+    BOOST_CHECK_EQUAL(destination.getUpperBound(), 7);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[2]), 100);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[3]), 200);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[4]), 300);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[5]), 400);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[6]), 500);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[7]), 600);
+  }
+
+  BOOST_AUTO_TEST_CASE(VariableToVariableCopyAssignmentArray1To5) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> source(1, 5);
+    source[1] = 11_INT;
+    source[2] = 22_INT;
+    source[3] = 33_INT;
+    source[4] = 44_INT;
+    source[5] = 55_INT;
+
+    CIEC_ARRAY_VARIABLE<CIEC_INT> destination(1, 5);
+    destination = source;
+
+    BOOST_CHECK_EQUAL(destination.getLowerBound(), 1);
+    BOOST_CHECK_EQUAL(destination.getUpperBound(), 5);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[1]), 11);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[2]), 22);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[3]), 33);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[4]), 44);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[5]), 55);
+  }
+
+  BOOST_AUTO_TEST_CASE(VariableToVariableCopyAssignmentArrayMinus1To1) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> source(-1, 1);
+    source[-1] = -10_INT;
+    source[0] = -20_INT;
+    source[1] = -30_INT;
+
+    CIEC_ARRAY_VARIABLE<CIEC_INT> destination(-1, 1);
+    destination = source;
+
+    BOOST_CHECK_EQUAL(destination.getLowerBound(), -1);
+    BOOST_CHECK_EQUAL(destination.getUpperBound(), 1);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[-1]), -10);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[0]), -20);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[1]), -30);
+  }
+
+  BOOST_AUTO_TEST_CASE(VariableToVariableCopyAssignmentArrayMinus5To5) {
+    CIEC_ARRAY_VARIABLE<CIEC_INT> source(-5, 5);
+    source[-5] = 1_INT;
+    source[-4] = 2_INT;
+    source[-3] = 3_INT;
+    source[-2] = 4_INT;
+    source[-1] = 5_INT;
+    source[0] = 6_INT;
+    source[1] = 7_INT;
+    source[2] = 8_INT;
+    source[3] = 9_INT;
+    source[4] = 10_INT;
+    source[5] = 11_INT;
+
+    CIEC_ARRAY_VARIABLE<CIEC_INT> destination(-5, 5);
+    destination = source;
+
+    BOOST_CHECK_EQUAL(destination.getLowerBound(), -5);
+    BOOST_CHECK_EQUAL(destination.getUpperBound(), 5);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[-5]), 1);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[-4]), 2);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[-3]), 3);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[-2]), 4);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[-1]), 5);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[0]), 6);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[1]), 7);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[2]), 8);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[3]), 9);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[4]), 10);
+    BOOST_CHECK_EQUAL(static_cast<CIEC_INT::TValueType>(destination[5]), 11);
+  }
+
   BOOST_AUTO_TEST_SUITE_END() // CIEC_ARRAY_TEMPLATE_function_test
 } // namespace forte::test
