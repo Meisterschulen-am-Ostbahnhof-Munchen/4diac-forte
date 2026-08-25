@@ -89,3 +89,74 @@ jobs:
         # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: ctest --build-config ${{ matrix.build_type }} --verbose
+
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-all-dev lcov
+          pip install gcovr
+
+      - name: Configure CMake
+        shell: bash
+        run: >
+          cmake -B ${{ github.workspace }}/build
+          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
+          -S ${{ github.workspace }}
+          --preset posix-coverage
+
+      - name: Build
+        shell: bash
+        run: cmake --build ${{ github.workspace }}/build --config Debug
+
+      - name: Test
+        working-directory: ${{ github.workspace }}/build
+        shell: bash
+        run: ctest --build-config Debug --verbose
+
+      - name: Generate coverage report
+        working-directory: ${{ github.workspace }}/build
+        shell: bash
+        run: >
+          gcovr
+          --gcov-executable gcov
+          --root ${{ github.workspace }}
+          --exclude "${{ github.workspace }}/tests/"
+          --exclude ".*/boost/.*"
+          --exclude ".*/usr/.*"
+          --cobertura coverage.xml
+          .
+
+      - name: Upload coverage artifact
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report-cpp
+          path: ${{ github.workspace }}/build/coverage.xml
+
+  upload-coverage-cpp:
+    needs: coverage
+    if: ${{ !cancelled() && needs.coverage.result == 'success' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      code-quality: write
+    steps:
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-report-cpp
+      - uses: actions/upload-code-coverage@v1
+        with:
+          file: coverage.xml
+          language: C++
+          label: code-coverage-agent
