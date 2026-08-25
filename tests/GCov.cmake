@@ -25,6 +25,11 @@ IF(NOT GENHTML_PATH)
   mark_as_advanced(GENHTML_PATH)
 ENDIF()
 
+IF(NOT GCOVR_PATH)
+  FIND_PROGRAM(GCOVR_PATH gcovr)
+  mark_as_advanced(GCOVR_PATH)
+ENDIF()
+
 IF(NOT GCOV_PATH)
   MESSAGE(FATAL_ERROR "Error: gcov not found")
 ENDIF()
@@ -52,5 +57,23 @@ FUNCTION(SETUP_GCOV targetName testRunner outputName)
                 
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
+
+        IF(GCOVR_PATH)
+          ADD_CUSTOM_TARGET(${targetName}Cobertura
+                  COMMAND ${LCOV_PATH} --directory . --zerocounters
+
+                  COMMAND ${testRunner} --verbose --log_format=HRF --log_level=test_suite --report_level=no ${ARGV3}
+
+                  COMMAND ${GCOVR_PATH}
+                          --gcov-executable ${GCOV_PATH}
+                          --root ${CMAKE_SOURCE_DIR}
+                          --exclude "${CMAKE_SOURCE_DIR}/tests/"
+                          --exclude ".*/boost/.*"
+                          --exclude ".*/usr/.*"
+                          --cobertura ${outputName}.xml
+
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+          )
+        ENDIF()
         
 ENDFUNCTION()

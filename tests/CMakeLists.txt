@@ -139,6 +139,8 @@ set_tests_properties(forte_test PROPERTIES TIMEOUT 300)
 
 if("${FORTE_ARCHITECTURE}" STREQUAL "Posix")
   if(FORTE_TEST_CODE_COVERAGE_ANALYSIS)
+      target_compile_options(forte_test PRIVATE --coverage)
+      target_link_options(forte_test PRIVATE --coverage)
       INCLUDE(GCov.cmake)    
       SETUP_GCOV(TestCoverage ctest coverage)
   endif() 

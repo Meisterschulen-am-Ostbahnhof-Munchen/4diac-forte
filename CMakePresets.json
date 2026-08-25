@@ -223,6 +223,28 @@
       ]
     },
     {
+      "name": "posix-coverage",
+      "displayName": "Coverage (Posix)",
+      "inherits": [
+        "tests",
+        "posix"
+      ],
+      "cacheVariables": {
+        "FORTE_TEST_CODE_COVERAGE_ANALYSIS": {
+          "type": "BOOL",
+          "value": "ON"
+        },
+        "FORTE_TEST_SANITIZE": {
+          "type": "BOOL",
+          "value": "OFF"
+        },
+        "FORTE_ARCHITECTURE": {
+          "type": "STRING",
+          "value": "Posix"
+        }
+      }
+    },
+    {
       "name": "posix-systemtests",
       "displayName": "System Tests (Posix)",
       "inherits": [

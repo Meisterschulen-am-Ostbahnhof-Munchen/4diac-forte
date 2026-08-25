@@ -36,3 +36,8 @@ file_list.txt
 /.vs/
 /.idea/
 /.cache/
+
+# coverage reports
+coverage.xml
+*.gcda
+*.gcno
