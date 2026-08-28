@@ -13,6 +13,8 @@
 #############################################################################
 # Tests for the IEC 61131-3 function FBs
 #############################################################################
+forte_test_add_sourcefile_cpp(F_ADD_tester.cpp)
+forte_test_add_sourcefile_cpp(F_MUL_tester.cpp)
 forte_test_add_sourcefile_cpp(F_DIV_tester.cpp)
 forte_test_add_sourcefile_cpp(F_MULTIME_tester.cpp)
 forte_test_add_sourcefile_cpp(F_DIVTIME_tester.cpp)
