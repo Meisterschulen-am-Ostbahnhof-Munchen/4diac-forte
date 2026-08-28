@@ -20,4 +20,5 @@ target_sources(forte-safearithmetic PUBLIC
         GEN_SAFE_MUL_fbt.h
         SAFE_DIV_fbt.h
         SAFE_SUB_fbt.h
+        gensafearithbase_fbt.h
 )

@@ -14,49 +14,15 @@
 
 #pragma once
 
-#include "forte/genfb.h"
+#include "gensafearithbase_fbt.h"
 #include "forte/datatypes/forte_any_num_variant.h"
-#include "forte/datatypes/forte_bool.h"
 
 namespace forte::SafeArithmetic::arithmetic {
-  class GEN_SAFE_MUL final : public CGenFunctionBlock<CFunctionBlock> {
+  class GEN_SAFE_MUL final : public CGenSafeArithBase<CIEC_ANY_NUM_VARIANT> {
       DECLARE_GENERIC_FIRMWARE_FB(GEN_SAFE_MUL)
 
     private:
-    protected:
-      size_t getGenEOOffset() override {
-        return 1;
-      }
-
-      // OUT and LIMIT_HIT are fixed data outputs (not part of the variable-arity IN1..INn inputs).
-      size_t getGenDOOffset() override {
-        return 2;
-      }
-
-      CEventConnection *getEOConUnchecked(TPortId) override;
-      void createGenInputData() override;
-      CIEC_ANY *getDI(size_t) override;
-      CIEC_ANY *getDO(size_t) override;
-      CDataConnection *getDOConUnchecked(const TPortId paIndex) override;
-
-    private:
-      static const TEventID scmEventREQID = 0;
-      static const TEventID scmEventCNFID = 0;
-
       void executeEvent(TEventID paEIID, CEventChainExecutionThread *const paECET) override;
-
-      void readInputData(TEventID paEI) override;
-      void writeOutputData(TEventID paEO) override;
-
-      bool createInterfaceSpec(const char *paConfigString, SFBInterfaceSpec &paInterfaceSpec) override;
-
-      CEventConnection conn_CNF;
-      std::unique_ptr<CIEC_ANY_NUM_VARIANT[]> mGenDIs;
-      std::vector<StringId> mDINames;
-      CIEC_ANY_NUM_VARIANT var_OUT;
-      CIEC_BOOL var_LIMIT_HIT;
-      COutDataConnection<CIEC_ANY_NUM_VARIANT> conn_OUT;
-      COutDataConnection<CIEC_BOOL> conn_LIMIT_HIT;
 
     public:
       GEN_SAFE_MUL(const StringId paInstanceNameId, CFBContainer &paContainer);
