@@ -23,10 +23,6 @@
 #include <limits>
 #include <type_traits>
 
-#if !defined(__GNUC__) && !defined(__clang__)
-#error "SafeArithmetic requires GCC or Clang (__builtin_{add,sub,mul}_overflow); MSVC is not yet supported."
-#endif
-
 // Saturating (clamping) arithmetic used by SAFE_ADD/SAFE_SUB/SAFE_MUL/SAFE_DIV.
 //
 // Every SAFE_* function block is generic (ANY_MAGNITUDE / ANY_NUM, like the
@@ -40,13 +36,106 @@
 // AddOperation<CIEC_TIME_OF_DAY, CIEC_TIME>) fall back to the unmodified
 // func_ADD/func_SUB behavior, since those are out of scope for this first
 // version of the library.
+namespace forte::SafeArithmetic::arithmetic::detail {
+
+  // GCC/Clang get the compiler-builtin overflow checks; every other compiler
+  // (MSVC in particular, which has no __builtin_{add,sub,mul}_overflow) gets
+  // a portable, UB-free fallback built from plain comparisons against
+  // std::numeric_limits, at the cost of a few extra branches/divisions.
+#if defined(__GNUC__) || defined(__clang__)
+  template<typename V>
+  bool add_overflow(V paIN1, V paIN2, V &paResult) {
+    return __builtin_add_overflow(paIN1, paIN2, &paResult);
+  }
+
+  template<typename V>
+  bool sub_overflow(V paIN1, V paIN2, V &paResult) {
+    return __builtin_sub_overflow(paIN1, paIN2, &paResult);
+  }
+
+  template<typename V>
+  bool mul_overflow(V paIN1, V paIN2, V &paResult) {
+    return __builtin_mul_overflow(paIN1, paIN2, &paResult);
+  }
+#else
+  template<typename V>
+  bool add_overflow(V paIN1, V paIN2, V &paResult) {
+    static_assert(std::is_integral_v<V>);
+    if constexpr (std::is_signed_v<V>) {
+      if ((paIN2 > V(0) && paIN1 > std::numeric_limits<V>::max() - paIN2) ||
+          (paIN2 < V(0) && paIN1 < std::numeric_limits<V>::min() - paIN2)) {
+        return true;
+      }
+    } else {
+      if (paIN1 > std::numeric_limits<V>::max() - paIN2) {
+        return true;
+      }
+    }
+    paResult = static_cast<V>(paIN1 + paIN2);
+    return false;
+  }
+
+  template<typename V>
+  bool sub_overflow(V paIN1, V paIN2, V &paResult) {
+    static_assert(std::is_integral_v<V>);
+    if constexpr (std::is_signed_v<V>) {
+      if ((paIN2 < V(0) && paIN1 > std::numeric_limits<V>::max() + paIN2) ||
+          (paIN2 > V(0) && paIN1 < std::numeric_limits<V>::min() + paIN2)) {
+        return true;
+      }
+    } else {
+      if (paIN1 < paIN2) {
+        return true;
+      }
+    }
+    paResult = static_cast<V>(paIN1 - paIN2);
+    return false;
+  }
+
+  template<typename V>
+  bool mul_overflow(V paIN1, V paIN2, V &paResult) {
+    static_assert(std::is_integral_v<V>);
+    if (paIN1 == V(0) || paIN2 == V(0)) {
+      paResult = V(0);
+      return false;
+    }
+    if constexpr (std::is_signed_v<V>) {
+      const V maxV = std::numeric_limits<V>::max();
+      const V minV = std::numeric_limits<V>::min();
+      // Classic pre-multiply range check: divide instead of multiplying, so
+      // the check itself can never overflow (or trigger the INT_MIN / -1 UB
+      // case, since every division below has a numerator of maxV or a minV
+      // divided by an operand of magnitude >= 1 whose sign keeps it != -1).
+      if (paIN1 > V(0)) {
+        if (paIN2 > V(0)) {
+          if (paIN1 > maxV / paIN2) return true;
+        } else {
+          if (paIN2 < minV / paIN1) return true;
+        }
+      } else {
+        if (paIN2 > V(0)) {
+          if (paIN1 < minV / paIN2) return true;
+        } else {
+          if (paIN1 < maxV / paIN2) return true;
+        }
+      }
+    } else {
+      if (paIN1 > std::numeric_limits<V>::max() / paIN2) return true;
+    }
+    paResult = static_cast<V>(paIN1 * paIN2);
+    return false;
+  }
+#endif
+
+} // namespace forte::SafeArithmetic::arithmetic::detail
+
 namespace forte::SafeArithmetic::arithmetic {
 
   template<typename V>
   V safe_add_native(V paIN1, V paIN2, bool &paLimitHit) {
     if constexpr (std::is_integral_v<V>) {
       V result;
-      if (__builtin_add_overflow(paIN1, paIN2, &result)) {
+      if (detail::add_overflow(paIN1, paIN2, result)) {
         paLimitHit = true;
         if constexpr (std::is_signed_v<V>) {
           return (paIN2 >= 0) ? std::numeric_limits<V>::max() : std::numeric_limits<V>::min();
@@ -69,7 +158,7 @@ namespace forte::SafeArithmetic::arithmetic {
   V safe_sub_native(V paIN1, V paIN2, bool &paLimitHit) {
     if constexpr (std::is_integral_v<V>) {
       V result;
-      if (__builtin_sub_overflow(paIN1, paIN2, &result)) {
+      if (detail::sub_overflow(paIN1, paIN2, result)) {
         paLimitHit = true;
         if constexpr (std::is_signed_v<V>) {
           return (paIN2 >= 0) ? std::numeric_limits<V>::min() : std::numeric_limits<V>::max();
@@ -93,7 +182,7 @@ namespace forte::SafeArithmetic::arithmetic {
   V safe_mul_native(V paIN1, V paIN2, bool &paLimitHit) {
     if constexpr (std::is_integral_v<V>) {
       V result;
-      if (__builtin_mul_overflow(paIN1, paIN2, &result)) {
+      if (detail::mul_overflow(paIN1, paIN2, result)) {
         paLimitHit = true;
         if constexpr (std::is_signed_v<V>) {
           const bool negative = (paIN1 < 0) != (paIN2 < 0);
