@@ -127,6 +127,23 @@ namespace forte::SafeArithmetic::arithmetic::detail {
   }
 #endif
 
+  // Common floating-point result handling for safe_{add,sub,mul,div}_native: a
+  // non-finite result is a limit condition regardless of whether it came from
+  // finite operands overflowing or from an already non-finite operand (e.g.
+  // REAL#INF + 1, or REAL#INF - REAL#INF producing NaN) - both cases must be
+  // reported via paLimitHit rather than silently leaking inf/NaN to OUT.
+  template<typename V>
+  V clamp_non_finite_result(V paResult, bool &paLimitHit) {
+    if (std::isfinite(paResult)) {
+      return paResult;
+    }
+    paLimitHit = true;
+    if (std::isnan(paResult)) {
+      return V(0);
+    }
+    return (paResult > V(0)) ? std::numeric_limits<V>::max() : std::numeric_limits<V>::lowest();
+  }
+
 } // namespace forte::SafeArithmetic::arithmetic::detail
 
 namespace forte::SafeArithmetic::arithmetic {
@@ -145,12 +162,7 @@ namespace forte::SafeArithmetic::arithmetic {
       }
       return result;
     } else {
-      const V result = paIN1 + paIN2;
-      if (std::isfinite(paIN1) && std::isfinite(paIN2) && !std::isfinite(result)) {
-        paLimitHit = true;
-        return (result > V(0)) ? std::numeric_limits<V>::max() : std::numeric_limits<V>::lowest();
-      }
-      return result;
+      return detail::clamp_non_finite_result(paIN1 + paIN2, paLimitHit);
     }
   }
 
@@ -169,12 +181,7 @@ namespace forte::SafeArithmetic::arithmetic {
       }
       return result;
     } else {
-      const V result = paIN1 - paIN2;
-      if (std::isfinite(paIN1) && std::isfinite(paIN2) && !std::isfinite(result)) {
-        paLimitHit = true;
-        return (result > V(0)) ? std::numeric_limits<V>::max() : std::numeric_limits<V>::lowest();
-      }
-      return result;
+      return detail::clamp_non_finite_result(paIN1 - paIN2, paLimitHit);
     }
   }
 
@@ -193,12 +200,7 @@ namespace forte::SafeArithmetic::arithmetic {
       }
       return result;
     } else {
-      const V result = paIN1 * paIN2;
-      if (std::isfinite(paIN1) && std::isfinite(paIN2) && !std::isfinite(result)) {
-        paLimitHit = true;
-        return (result > V(0)) ? std::numeric_limits<V>::max() : std::numeric_limits<V>::lowest();
-      }
-      return result;
+      return detail::clamp_non_finite_result(paIN1 * paIN2, paLimitHit);
     }
   }
 
@@ -222,12 +224,7 @@ namespace forte::SafeArithmetic::arithmetic {
         paLimitHit = true;
         return V(0);
       }
-      const V result = paIN1 / paIN2;
-      if (std::isfinite(paIN1) && std::isfinite(paIN2) && !std::isfinite(result)) {
-        paLimitHit = true;
-        return (result > V(0)) ? std::numeric_limits<V>::max() : std::numeric_limits<V>::lowest();
-      }
-      return result;
+      return detail::clamp_non_finite_result(paIN1 / paIN2, paLimitHit);
     }
   }
 
