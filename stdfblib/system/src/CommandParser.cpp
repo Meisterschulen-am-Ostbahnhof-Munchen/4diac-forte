@@ -579,6 +579,11 @@ namespace forte::iec61499::system {
     return EMGMResponse::Ready;
   }
 
+  /**
+   * @brief Formats the query result for the current management command.
+   *
+   * @param paResponse String to which the formatted query response is appended.
+   */
   void CommandParser::generateQueryResponse(CIEC_STRING &paResponse) {
     switch (mCommand.mCMD) {
       case EMGMCommandType::QueryConnection:
@@ -629,6 +634,12 @@ namespace forte::iec61499::system {
     }
   }
 
+  /**
+   * @brief Appends the dot-separated identifier name to a destination string.
+   *
+   * @param paDest Destination string to extend.
+   * @param paIdentifier Identifier segments to append.
+   */
   void CommandParser::appendIdentifierName(CIEC_STRING &paDest, TNameIdentifier &paIdentifier) {
     auto it = paIdentifier.begin();
     if (it == paIdentifier.end()) {
