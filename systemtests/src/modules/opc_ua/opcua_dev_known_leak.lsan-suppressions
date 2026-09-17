@@ -1,0 +1,13 @@
+# Suppresses a single, pre-existing, unrelated LeakSanitizer report that only
+# OPCUA_LocalHandlerStartServerRace hits, because no other systemtest uses the "-d OPCUA_DEV"
+# device. All 34 allocations in that report originate from OPCUA_MGR::initialize() (called from
+# OPCUA_DEV::startDevice()), via two different sub-paths -- addMethodNode() (once per management
+# method OPCUA_MGR registers) and addMgmtObjectInstance() -- each leaking a small array/string
+# inside open62541's node-copy machinery. Matching on OPCUA_MGR::initialize(), the single entry
+# point both sub-paths share, rather than on the far more generic open62541 helper UA_Array_copy
+# they eventually reach, keeps this from also silencing an unrelated leak that happens to pass
+# through that same generic helper from a completely different, unrelated caller. This is not a
+# process-wide leak-detection disable -- a genuinely new leak elsewhere is still caught. See the
+# comment next to OPCUA_LocalHandlerStartServerRace in CMakeLists.txt, and
+# https://github.com/eclipse-4diac/4diac-forte/issues/1054 for the leak itself.
+leak:OPCUA_MGR::initialize
