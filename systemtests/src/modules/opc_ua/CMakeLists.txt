@@ -63,15 +63,6 @@ set_tests_properties(OPCUA_LocalHandlerStartServerRace PROPERTIES
                       TIMEOUT 10
                       FAIL_REGULAR_EXPRESSION "TEST_CONDITION_FAILED|ERROR: T|==ERROR"
                       ENVIRONMENT "FORTE_COM_OPC_UA_TEST_STARTUP_DELAY_MS=500;FORTE_COM_OPC_UA_TEST_STARTUP_WAIT_FOR_ATTEMPTS=16;LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/opcua_dev_known_leak.lsan-suppressions;ASAN_OPTIONS=fast_unwind_on_malloc=0:malloc_context_size=30")
-# Deliberately RED on this branch alone (see the fix in the stacked PR). WILL_FAIL (the pattern
-# Test_Hard_Fail_Alaways_Inverted/Test_Soft_Fail_Alaways_Inverted use above) only inverts a
-# nonzero *exit code* -- it has no effect here, since this failure is detected via
-# FAIL_REGULAR_EXPRESSION matching TEST_CONDITION_FAILED in the output while the process itself
-# still exits 0, and CTest treats a FAIL_REGULAR_EXPRESSION match as a failure unconditionally.
-# DISABLED keeps develop's CI green if this PR is ever merged before its stacked fix PR instead:
-# the test is skipped rather than run-and-failed. Removed by the stacked fix PR, where this test
-# is expected to actually run and pass.
-SET_TESTS_PROPERTIES(OPCUA_LocalHandlerStartServerRace PROPERTIES DISABLED TRUE)
 
 forte_add_systemtest_hard(OPCUA_LocalMethdodsCreate localMethodsCreate.fboot 10)
 

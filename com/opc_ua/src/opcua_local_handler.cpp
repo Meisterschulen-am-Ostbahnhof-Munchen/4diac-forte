@@ -176,6 +176,7 @@ namespace forte::com_infra::opc_ua {
     generateServerStrings(gOpcuaServerPort.mArgument, serverStrings);
     configureUAServer(serverStrings, config);
 
+    bool serverStartedSignaled = false;
     mUaServer = UA_Server_newWithConfig(&config);
     if (mUaServer) {
       if (initializeNodesets(*mUaServer)) {
@@ -189,6 +190,7 @@ namespace forte::com_infra::opc_ua {
             auto mLdsMeHandler = forte::com_infra::opc_ua::detail::LdsMeHandler(*mUaServer);
 #endif // FORTE_COM_OPC_UA_MULTICAST
             mServerStarted.inc();
+            serverStartedSignaled = true;
             while (isAlive()) {
               UA_UInt16 timeToSleepMs;
               {
@@ -223,19 +225,56 @@ namespace forte::com_infra::opc_ua {
       DEVLOG_ERROR("[OPC UA LOCAL]: Couldn't initialize server\n");
       UA_ServerConfig_clear(&config);
     }
-    mServerStarted.inc(); // this will avoid locking startServer() for all cases where the starting of server failed
+    // mServerStarted was already signaled above once the server became ready; signaling it
+    // again here on the shutdown path (after a successful run) would leave it stuck posted
+    // with nothing to consume it, and a later startServer() call would then consume this
+    // stale post instead of waiting for its own thread's readiness signal.
+    if (!serverStartedSignaled) {
+      mServerStarted.inc(); // this will avoid locking startServer() for all cases where the starting of server failed
+    }
   }
 
   void COPC_UA_Local_Handler::startServer() {
-    if (!isAlive()) {
-      start();
-      mServerStarted.waitIndefinitely();
-      mServerStarted.inc(); // in case two threads get into this block at the same time
+    util::CCriticalRegion criticalRegion(mStartMutex);
+    if (mServerReady) {
+      return; // already running from an earlier, successful call
+    }
+    // start() is a no-op if a thread is already running; that can't happen here since
+    // mStartMutex serializes every caller for the whole duration of this function, including
+    // the wait below, so a still-in-progress attempt is never observed by a second caller.
+    start();
+    mServerStarted.waitIndefinitely();
+    mServerReady = (nullptr != mUaServer);
+    // On failure mServerReady stays false and mUaServer is null (run() clears both before
+    // signaling), so the next caller -- whether a retry from the same code path or a
+    // completely different one -- starts a fresh attempt instead of being stuck forever.
+    // However, run() signals mServerStarted from inside its own body, strictly before it
+    // returns -- runThread() only resets mThreadHandle to nullHandle *after* run() has
+    // returned. Without the end() call below, a retry could reach start() while mThreadHandle
+    // is still non-null (the old thread not yet fully unwound), in which case start() would
+    // skip creating a new thread entirely and the retry's waitIndefinitely() would then hang
+    // forever, since the old, already-finished thread will never signal mServerStarted again.
+    if (!mServerReady) {
+      end();
+      // end()'s join() alone is not a reliable guarantee that mThreadHandle is cleared by the
+      // time we get here: CThreadBase::join() does mJoinSem.waitIndefinitely() and then
+      // immediately re-posts it ("allow many joins"), and runThread() also posts mJoinSem once
+      // per thread exit. Across repeated failed attempts on this same object, that re-post from
+      // an *earlier* join() can still be pending, so a *later* join() call can consume that
+      // stale post and return immediately -- before the *current* worker has actually reached
+      // runThread()'s mThreadHandle reset. Wait on the handle itself instead, which is what
+      // start() actually checks, so a subsequent retry is guaranteed to spawn a fresh thread.
+      while (arch::CThread::TThreadHandleType{} != getThreadHandle()) {
+        sleepThread(1);
+      }
     }
   }
 
   void COPC_UA_Local_Handler::stopServer() {
+    util::CCriticalRegion criticalRegion(mStartMutex);
     end();
+    mServerReady = false; // otherwise a later startServer() would skip start() entirely and
+                          // keep pointing at the mUaServer that run() already deleted
   }
 
   void COPC_UA_Local_Handler::generateServerStrings(TForteUInt16 paUAServerPort,
