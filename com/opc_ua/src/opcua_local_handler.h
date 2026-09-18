@@ -202,6 +202,26 @@ namespace forte::com_infra::opc_ua {
 #endif // FORTE_COM_OPC_UA_TEST_HOOKS
 
       /**
+       * Guards startServer()/stopServer() end-to-end (including the blocking wait for
+       * completion), so concurrent callers of startServer() (e.g. one from device startup via
+       * OPCUA_MGR::initialize(), another from a resource's comm FB INIT) are fully serialized
+       * instead of racing each other on isAlive(), and a concurrent stopServer() can't interleave
+       * with an in-progress start attempt either.
+       */
+      arch::CSyncObject mStartMutex;
+
+      /**
+       * True only once the server has actually finished starting *successfully* (mUaServer set).
+       * This, not isAlive(), is the real readiness signal startServer() waits for: isAlive()
+       * becomes true the instant the background thread is merely scheduled, well before run() has
+       * done any real work, so using it as a readiness check let a caller arriving during startup
+       * skip the wait and see mUaServer still null. Left false after a failed start (so the next
+       * caller retries from scratch) and reset to false by stopServer() (so a later restart
+       * doesn't skip start() and reuse a deleted mUaServer).
+       */
+      bool mServerReady = false;
+
+      /**
        * Stops the OPC UA server
        */
       void stopServer();
