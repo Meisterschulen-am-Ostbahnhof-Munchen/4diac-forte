@@ -63,6 +63,17 @@ add_library(forte-com-opc_ua)
 target_link_libraries(forte-com-opc_ua PUBLIC forte-core open62541::open62541)
 target_link_libraries(forte PUBLIC $<IF:$<BOOL:${BUILD_SHARED_LIBS}>,forte-com-opc_ua,$<LINK_LIBRARY:WHOLE_ARCHIVE,forte-com-opc_ua>>)
 
+# Only compiled in for systemtest builds -- gates test-only instrumentation (e.g. the artificial
+# startup delay hook in COPC_UA_Local_Handler::run(), used by OPCUA_LocalHandlerStartServerRace)
+# out of production/release builds entirely, rather than relying on the hook being a no-op at
+# runtime. Must be PUBLIC, not PRIVATE: opcua_local_handler.h is also included by other targets
+# that link against forte-com-opc_ua (e.g. forte-system's OPCUA_MGR.cpp, which needs the full
+# COPC_UA_Local_Handler definition). If those consumers were compiled without this definition
+# while forte-com-opc_ua's own sources have it, COPC_UA_Local_Handler would have two different
+# sizes/layouts across translation units -- a silent ODR violation that corrupts memory instead
+# of failing to build.
+target_compile_definitions(forte-com-opc_ua PUBLIC $<$<BOOL:${FORTE_SYSTEM_TESTS}>:FORTE_COM_OPC_UA_TEST_HOOKS>)
+
 add_subdirectory(include)
 add_subdirectory(src)
 
