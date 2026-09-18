@@ -47,22 +47,13 @@ forte_add_systemtest_hard(OPCUA_LocalFirstWrite localFirstWrite.fboot 10)
 # TIMEOUT above must comfortably cover this ceiling plus the fboot's own Delay_Check/Delay_End/
 # STEST_END sequence. See https://github.com/eclipse-4diac/4diac-forte/issues/1053
 #
-# NOTE: using "-d OPCUA_DEV" here exposes a separate, pre-existing memory leak in
-# OPCUA_MGR::initialize() (confirmed present with or without this fix, see
-# https://github.com/eclipse-4diac/4diac-forte/issues/1054) that no other systemtest hits
-# because none of them use the OPCUA_DEV device. It is unrelated to this test's actual purpose
-# (verifying startServer()'s readiness handling), so it is suppressed narrowly, by function name,
-# via opcua_dev_known_leak.lsan-suppressions -- this only silences that specific known leak, not
-# leak detection for the process, so a genuinely new leak is still caught. ASAN_OPTIONS below
-# forces slow/precise unwinding (the default fast unwinder only resolves 2 stack frames on this
-# build, too shallow for the suppression to match its FORTE-side frame).
 file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/opcuaLocalHandlerStartServerRace.fboot" opcua_race_bootfile)
 add_test(NAME OPCUA_LocalHandlerStartServerRace
          COMMAND $<TARGET_FILE:forte_systemtest> -d OPCUA_DEV -f "${opcua_race_bootfile}")
 set_tests_properties(OPCUA_LocalHandlerStartServerRace PROPERTIES
                       TIMEOUT 10
                       FAIL_REGULAR_EXPRESSION "TEST_CONDITION_FAILED|ERROR: T|==ERROR"
-                      ENVIRONMENT "FORTE_COM_OPC_UA_TEST_STARTUP_DELAY_MS=500;FORTE_COM_OPC_UA_TEST_STARTUP_WAIT_FOR_ATTEMPTS=16;LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/opcua_dev_known_leak.lsan-suppressions;ASAN_OPTIONS=fast_unwind_on_malloc=0:malloc_context_size=30")
+                      ENVIRONMENT "FORTE_COM_OPC_UA_TEST_STARTUP_DELAY_MS=500;FORTE_COM_OPC_UA_TEST_STARTUP_WAIT_FOR_ATTEMPTS=16")
 
 forte_add_systemtest_hard(OPCUA_LocalMethdodsCreate localMethodsCreate.fboot 10)
 
