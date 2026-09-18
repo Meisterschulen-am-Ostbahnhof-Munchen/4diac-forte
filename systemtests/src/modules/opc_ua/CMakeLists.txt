@@ -19,7 +19,41 @@ SET_TESTS_PROPERTIES(OPCUA_LocalFirstRead PROPERTIES FAIL_REGULAR_EXPRESSION "ER
 
 forte_add_systemtest_hard(OPCUA_LocalFirstWrite localFirstWrite.fboot 10)
 
-SET_TESTS_PROPERTIES(OPCUA_LocalFirstRead PROPERTIES FAIL_REGULAR_EXPRESSION "ERROR: T|==ERROR|OPC UA REMOTE") #remote handler shouldn't start
+# Reproduces a bug in COPC_UA_Local_Handler::startServer(): isAlive() becomes true the instant
+# the background run() thread is *scheduled*, long before UA_Server_run_startup() actually
+# finishes (real startup can take hundreds of ms on embedded targets, dominated by loading the
+# full standard nodeset). Any caller of startServer() that arrives while that startup is still in
+# progress sees isAlive()==true, skips the intended wait, finds mUaServer still null, and fails
+# permanently -- there is no retry anywhere in the call chain.
+#
+# This is reproducible even using the officially documented "-d OPCUA_DEV" device (see
+# doc/tutorials/opcuadeployment.adoc), whose whole purpose is to start the local OPC UA server
+# eagerly, before any resource/FB exists, specifically to avoid this class of problem:
+# OPCUA_MGR::initialize() (called from OPCUA_DEV::startDevice()) calls enableHandler() itself,
+# but that call does not block bootfile/resource processing, which proceeds on a separate thread
+# regardless of whether the eager startServer() call has actually finished -- so the intended
+# safeguard does not close the gap either. On a fast POSIX host the real startup normally
+# finishes in well under 1ms, so the gap is too narrow to hit in practice without slowing it
+# down. Both env vars below are test-only (compiled out entirely unless FORTE_SYSTEM_TESTS is
+# enabled, no effect otherwise): FORTE_COM_OPC_UA_TEST_STARTUP_WAIT_FOR_ATTEMPTS makes run() hold
+# startup until that many initializeAction() attempts have actually been observed (16, matching
+# the 16 PUBLISH_1 instances below), rather than guessing a fixed wall-clock delay that could pass
+# on an unfixed implementation if the host happens to be slow to even reach bootfile processing.
+# FORTE_COM_OPC_UA_TEST_STARTUP_DELAY_MS is a safety ceiling for the (expected, harmless) case
+# where the resource's single executor thread happens to dispatch a PUBLISH_1 instance that wins
+# the race to become the very first startServer() caller: since that caller then blocks holding
+# the same thread, later PUBLISH_1 instances in the fan-out never run and the count can get stuck
+# below 16 -- keep this small (not a generous many-seconds value), since the test's declared
+# TIMEOUT above must comfortably cover this ceiling plus the fboot's own Delay_Check/Delay_End/
+# STEST_END sequence. See https://github.com/eclipse-4diac/4diac-forte/issues/1053
+#
+file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/opcuaLocalHandlerStartServerRace.fboot" opcua_race_bootfile)
+add_test(NAME OPCUA_LocalHandlerStartServerRace
+         COMMAND $<TARGET_FILE:forte_systemtest> -d OPCUA_DEV -f "${opcua_race_bootfile}")
+set_tests_properties(OPCUA_LocalHandlerStartServerRace PROPERTIES
+                      TIMEOUT 10
+                      FAIL_REGULAR_EXPRESSION "TEST_CONDITION_FAILED|ERROR: T|==ERROR"
+                      ENVIRONMENT "FORTE_COM_OPC_UA_TEST_STARTUP_DELAY_MS=500;FORTE_COM_OPC_UA_TEST_STARTUP_WAIT_FOR_ATTEMPTS=16")
 
 forte_add_systemtest_hard(OPCUA_LocalMethdodsCreate localMethodsCreate.fboot 10)
 
