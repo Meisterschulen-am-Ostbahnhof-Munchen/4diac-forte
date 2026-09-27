@@ -25,6 +25,9 @@
 
 #include <string>
 #include <vector>
+#ifdef FORTE_COM_OPC_UA_TEST_HOOKS
+#include <atomic>
+#endif // FORTE_COM_OPC_UA_TEST_HOOKS
 
 #include "forte/arch/forte_thread.h"
 #include "forte/conn.h"
@@ -186,6 +189,37 @@ namespace forte::com_infra::opc_ua {
        * Indicates that the server has started, and allow waiting threads to work on it
        */
       arch::CSemaphore mServerStarted;
+
+#ifdef FORTE_COM_OPC_UA_TEST_HOOKS
+      /**
+       * Test-only. Incremented once per initializeAction() entry, before enableHandler() is
+       * called. Used by run()'s test-only startup delay hook to deterministically wait until a
+       * configured number of attempts have been observed, instead of guessing a fixed
+       * wall-clock delay. See FORTE_COM_OPC_UA_TEST_STARTUP_DELAY_MS /
+       * FORTE_COM_OPC_UA_TEST_STARTUP_WAIT_FOR_ATTEMPTS in run().
+       */
+      std::atomic<unsigned int> mTestInitializeActionAttempts{0};
+#endif // FORTE_COM_OPC_UA_TEST_HOOKS
+
+      /**
+       * Guards startServer()/stopServer() end-to-end (including the blocking wait for
+       * completion), so concurrent callers of startServer() (e.g. one from device startup via
+       * OPCUA_MGR::initialize(), another from a resource's comm FB INIT) are fully serialized
+       * instead of racing each other on isAlive(), and a concurrent stopServer() can't interleave
+       * with an in-progress start attempt either.
+       */
+      arch::CSyncObject mStartMutex;
+
+      /**
+       * True only once the server has actually finished starting *successfully* (mUaServer set).
+       * This, not isAlive(), is the real readiness signal startServer() waits for: isAlive()
+       * becomes true the instant the background thread is merely scheduled, well before run() has
+       * done any real work, so using it as a readiness check let a caller arriving during startup
+       * skip the wait and see mUaServer still null. Left false after a failed start (so the next
+       * caller retries from scratch) and reset to false by stopServer() (so a later restart
+       * doesn't skip start() and reuse a deleted mUaServer).
+       */
+      bool mServerReady = false;
 
       /**
        * Stops the OPC UA server
