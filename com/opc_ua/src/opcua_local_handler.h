@@ -25,6 +25,9 @@
 
 #include <string>
 #include <vector>
+#ifdef FORTE_COM_OPC_UA_TEST_HOOKS
+#include <atomic>
+#endif // FORTE_COM_OPC_UA_TEST_HOOKS
 
 #include "forte/arch/forte_thread.h"
 #include "forte/conn.h"
@@ -186,6 +189,17 @@ namespace forte::com_infra::opc_ua {
        * Indicates that the server has started, and allow waiting threads to work on it
        */
       arch::CSemaphore mServerStarted;
+
+#ifdef FORTE_COM_OPC_UA_TEST_HOOKS
+      /**
+       * Test-only. Incremented once per initializeAction() entry, before enableHandler() is
+       * called. Used by run()'s test-only startup delay hook to deterministically wait until a
+       * configured number of attempts have been observed, instead of guessing a fixed
+       * wall-clock delay. See FORTE_COM_OPC_UA_TEST_STARTUP_DELAY_MS /
+       * FORTE_COM_OPC_UA_TEST_STARTUP_WAIT_FOR_ATTEMPTS in run().
+       */
+      std::atomic<unsigned int> mTestInitializeActionAttempts{0};
+#endif // FORTE_COM_OPC_UA_TEST_HOOKS
 
       /**
        * Stops the OPC UA server
