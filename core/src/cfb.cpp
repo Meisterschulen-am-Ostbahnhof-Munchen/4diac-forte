@@ -20,6 +20,8 @@
 #include "forte/cfb.h"
 #include "forte/adapter.h"
 #include "forte/stringid.h"
+#include "forte/mgmcmd.h"
+#include "forte/util/devlog.h"
 
 namespace forte {
   namespace {
@@ -46,6 +48,21 @@ namespace forte {
             }
           },
           paId);
+    }
+
+    // "FB.PORT" or "PORT" for the interface of the composite, for error messages
+    std::string toPortPath(const StringId paFBNameId, const std::span<const StringId> paIds) {
+      std::string path;
+      if (paFBNameId) {
+        path = paFBNameId.get();
+      }
+      for (const StringId id : paIds) {
+        if (!path.empty()) {
+          path += '.';
+        }
+        path += id.get();
+      }
+      return path;
     }
 
     bool forwardGenericDI(CFunctionBlock &dstFB, const StringId dstId, const CIEC_ANY &paRefValue) {
@@ -218,12 +235,17 @@ namespace forte {
   bool CCompositeFB::establishConnection(const SCFB_FBConnectionData &paConnectionData) {
     CConnection::Wrapper con = getInternalConnection(paConnectionData.mSrcFBNameId, getIds(paConnectionData.mSrcId));
     if (!con) {
+      DEVLOG_ERROR("[CFB] %s: source %s of an internal connection not found\n",
+                   getFullQualifiedApplicationInstanceName('.').c_str(),
+                   toPortPath(paConnectionData.mSrcFBNameId, getIds(paConnectionData.mSrcId)).c_str());
       return false;
     }
     EMGMResponse retVal;
     if (paConnectionData.mDstFBNameId) {
       CFunctionBlock *dstFB = getFB(paConnectionData.mDstFBNameId);
       if (!dstFB) {
+        DEVLOG_ERROR("[CFB] %s: destination FB %s of an internal connection not found\n",
+                     getFullQualifiedApplicationInstanceName('.').c_str(), paConnectionData.mDstFBNameId.data());
         return false;
       }
       retVal = con->connect(*dstFB, getIds(paConnectionData.mDstId));
@@ -231,6 +253,12 @@ namespace forte {
       retVal = con->connectToCFBInterface(*this, getIds(paConnectionData.mDstId));
     }
     if (retVal != EMGMResponse::Ready) {
+      const std::string_view response = mgm_cmd::getResponseText(retVal);
+      DEVLOG_ERROR("[CFB] %s: internal connection %s -> %s failed: %.*s\n",
+                   getFullQualifiedApplicationInstanceName('.').c_str(),
+                   toPortPath(paConnectionData.mSrcFBNameId, getIds(paConnectionData.mSrcId)).c_str(),
+                   toPortPath(paConnectionData.mDstFBNameId, getIds(paConnectionData.mDstId)).c_str(),
+                   static_cast<int>(response.size()), response.data());
       return false;
     }
     // the connection has registered itself in the destination FB, so release it here
