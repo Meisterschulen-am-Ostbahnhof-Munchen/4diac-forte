@@ -17,6 +17,7 @@
 #include "forte/dataconn.h"
 #include "forte/funcbloc.h"
 #include "forte/mgmcmd.h"
+#include "forte/util/devlog.h"
 #include "gatherdataconn.h"
 #include "membdataconn.h"
 #include "negdataconn.h"
@@ -136,6 +137,10 @@ namespace forte {
     if (getDataTypeID() == CIEC_ANY::e_ANY) {
       handleAnySrcPortConnection(paDstDataPoint);
     } else if (!canBeConnected(getValue(), paDstDataPoint)) {
+      DEVLOG_ERROR("[DATA CONNECTION]: type %d of the source cannot be connected to type %d of input %u of FB %s\n",
+                   static_cast<int>(getValue().getDataTypeID()), static_cast<int>(paDstDataPoint.getDataTypeID()),
+                   static_cast<unsigned int>(paDstPortId),
+                   paDstFB.getFullQualifiedApplicationInstanceName('.').c_str());
       return EMGMResponse::InvalidOperation;
     }
 
