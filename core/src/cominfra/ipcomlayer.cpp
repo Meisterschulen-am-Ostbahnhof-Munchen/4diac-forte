@@ -217,7 +217,23 @@ namespace forte::com_infra {
             mConnectionState = e_Listening;
           }
           break;
-        case -1: mInterruptResp = e_ProcessDataRecvFaild; break;
+        case -1:
+          if (e_Subscriber == mFb->getComServiceType()) {
+            // a UDP receive error can be temporary, the subscriber keeps its socket
+            mInterruptResp = e_ProcessDataRecvFaild;
+            break;
+          }
+          // the socket would be reported readable again at once and fail again, so handle the error like a
+          // closed connection
+          DEVLOG_ERROR("Receiving on the TCP connection of FB %s failed, closing it\n",
+                       mFb->getFullQualifiedApplicationInstanceName('.').c_str());
+          mInterruptResp = e_InitTerminated;
+          closeSocket(&mSocketID);
+          if (e_Server == mFb->getComServiceType()) {
+            // Move server into listening mode again
+            mConnectionState = e_Listening;
+          }
+          break;
         default:
           // we successfully received data
           mBufFillSize += nRetVal;
