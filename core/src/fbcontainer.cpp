@@ -49,6 +49,8 @@ namespace forte {
     for (auto it : getChildren()) {
       if (it->isFB()) {
         if (!static_cast<CFunctionBlock *>(it)->initialize()) {
+          DEVLOG_ERROR("Internal FB %s could not be initialized\n",
+                       static_cast<CFunctionBlock *>(it)->getFullQualifiedApplicationInstanceName('.').c_str());
           return false;
         }
       }
