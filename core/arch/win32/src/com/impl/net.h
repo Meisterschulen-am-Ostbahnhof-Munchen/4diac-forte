@@ -13,13 +13,18 @@
 
 #pragma once
 
+#include "socket.h"
+
 #include <string_view>
 #include <ws2tcpip.h>
 
 namespace forte::com::impl::net {
 
-  SOCKET open(std::string_view paConfigString, const ADDRINFOA &paHints);
+  ComResult mapSocketError(int paError, ComResult paFallback) noexcept;
+  ComResult mapResolverError(int paResolverError, ComResult paFallback) noexcept;
 
-  int setNonBlocking(SOCKET paSocket);
+  ComResultValue<ADDRINFOA *> resolve(std::string_view paConfigString, const ADDRINFOA &paHints);
+
+  ComResultValue<Socket> open(std::string_view paConfigString, const ADDRINFOA &paHints);
 
 } // namespace forte::com::impl::net

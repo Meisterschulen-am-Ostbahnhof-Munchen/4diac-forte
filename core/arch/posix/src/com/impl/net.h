@@ -13,13 +13,18 @@
 
 #pragma once
 
+#include "socket.h"
+
 #include <string_view>
 #include <netdb.h>
 
 namespace forte::com::impl::net {
 
-  int open(std::string_view paConfigString, const addrinfo &paHints);
+  ComResult mapSocketError(int paError, ComResult paFallback) noexcept;
+  ComResult mapResolverError(int paResolverError, int paSystemError, ComResult paFallback) noexcept;
 
-  int setNonBlocking(int paSocket);
+  ComResultValue<addrinfo *> resolve(std::string_view paConfigString, const addrinfo &paHints);
+
+  ComResultValue<Socket> open(std::string_view paConfigString, const addrinfo &paHints);
 
 } // namespace forte::com::impl::net
